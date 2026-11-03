@@ -27,7 +27,8 @@ A browser-based rug-in-room visualizer inspired by MyRoom Studio, with supplied 
 - `artifacts/room-studio/` — visualizer application and original scene assets.
 - `docs/reference-research.md` — reference-site findings, sources, and research limitations.
 - `scripts/src/import-mnd-catalog.ts` — import and optimize the public MND collection into App Storage.
-- `scripts/src/import-room-photos.ts` — optimize and store the six supplied room photographs in App Storage.
+- `scripts/src/import-room-photos.ts` — optimize and store the supplied room photographs in App Storage.
+- `scripts/src/build-floor-masks.ts` — build photo-aligned floor alpha masks; review full-floor diagnostics before uploading with `--upload`. Python/OpenCV is only used during asset preparation.
 
 ## Architecture decisions
 
@@ -37,17 +38,17 @@ A browser-based rug-in-room visualizer inspired by MyRoom Studio, with supplied 
 
 ## Product
 
-Six supplied room scenes, all 81 MND Nepal designs from collection pages 1–5, compatible original sample designs, search and pagination, custom image uploads, size/position/rotation controls, direct dragging, room/close-up/plan views, before/after, full screen with an explicit exit and an expanded-view fallback, local saved designs, shareable catalogue configurations, and PNG downloads.
+Five supplied room scenes, all 81 MND Nepal designs from collection pages 1–5, compatible original sample designs, search and pagination, custom image uploads, size/position/rotation controls, direct dragging, room/close-up/plan views, before/after, full screen with an explicit exit and an expanded-view fallback, local saved designs, shareable catalogue configurations, and PNG downloads.
 
 ## User preferences
 
 The user requested deep research of https://myroom.studio/ and a room visualizer based on that workflow.
 The user requested all rug designs from pages 1–5 of https://modernnaturedesignnepal.com/collections, using the actual design images and original names.
-The user requested exactly six supplied room entries: Living Room, both Bedroom uploads, one Lobby, Kitchen, and Office. Keep both Bedroom entries, but do not duplicate Lobby.
+The user requested a single room named Bedroom, removing the duplicate, and one Lobby. The five rooms are Living Room, Bedroom, Lobby, Kitchen, and Office. Floor masking corrections must apply to every room.
 
 ## Gotchas
 
-Uploaded rug images stay in the browser; shared links cannot transfer those images to another device. A photograph does not provide real-world measurement calibration. Replacing a room photograph requires retracing its floor and furniture masks.
+Uploaded rug images stay in the browser; shared links cannot transfer those images to another device. A photograph does not provide real-world measurement calibration. Replacing a room photograph requires rebuilding and reviewing its photo-aligned floor alpha mask, including thin legs and open floor beneath furniture. The same alpha mask is used for compositing and hit testing.
 MND catalogue size defaults are adjustable preview dimensions inferred from image proportions, not verified product measurements. Catalogue images are served through the API at the same origin to preserve PNG export without canvas CORS restrictions.
 
 ## Pointers

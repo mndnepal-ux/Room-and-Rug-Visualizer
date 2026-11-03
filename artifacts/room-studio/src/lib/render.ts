@@ -1,5 +1,5 @@
 import { CANVAS_H, CANVAS_W, CROP_Y, type Pt, type Scene } from "./scenes";
-import { FLOOR_MASKS, isVisibleFloor } from "./floor-masks";
+import { FLOOR_MASKS, isVisibleFloor, registerFloorPixels } from "./floor-masks";
 
 export interface RugPlacement {
   wCm: number;
@@ -135,29 +135,22 @@ let layer: HTMLCanvasElement | null = null;
 let tmp: HTMLCanvasElement | null = null;
 const floorMaskCache = new Map<string, HTMLCanvasElement>();
 
+export function registerPhotoFloorMask(sceneId: string, image: HTMLImageElement) {
+  if (image.naturalWidth !== CANVAS_W || image.naturalHeight !== CANVAS_H)
+    throw new Error("The room mask does not match the photograph dimensions.");
+  const mask = mk(CANVAS_W, CANVAS_H);
+  const context = mask.getContext("2d")!;
+  context.drawImage(image, 0, 0);
+  registerFloorPixels(sceneId, context.getImageData(0, 0, CANVAS_W, CANVAS_H));
+  floorMaskCache.set(sceneId, mask);
+}
+
 function floorMask(scene: Scene) {
   let mask = floorMaskCache.get(scene.id);
   if (mask) return mask;
-  mask = mk(CANVAS_W, CANVAS_H);
-  const mc = mask.getContext("2d")!;
-  const geometry = FLOOR_MASKS[scene.id];
-  if (geometry) {
-    const fill = (points: Pt[]) => {
-      mc.beginPath();
-      points.forEach(([x, y], i) => {
-        if (i === 0) mc.moveTo(x, y - CROP_Y);
-        else mc.lineTo(x, y - CROP_Y);
-      });
-      mc.closePath();
-      mc.fill();
-    };
-    mc.fillStyle = "#fff";
-    fill(geometry.outline);
-    mc.globalCompositeOperation = "destination-out";
-    geometry.furniture.forEach(fill);
-  }
-  floorMaskCache.set(scene.id, mask);
-  return mask;
+  // Do not silently fall back to polygon clipping: it creates the visible
+  // furniture-shaped floor cutouts this photo-aligned mask replaces.
+  throw new Error(`The floor mask for ${scene.name} has not loaded.`);
 }
 
 export function drawRoom(c: CanvasRenderingContext2D, img: HTMLImageElement, scene: Scene, tex: TexSource | null, p: RugPlacement, showRug: boolean) {

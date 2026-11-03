@@ -1,0 +1,1 @@
+- [Photo mask validation](photo-mask-validation.md) — review the entire floor, not only the default rug; thin legs and floor shadows need separate treatment.

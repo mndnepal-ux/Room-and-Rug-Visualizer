@@ -25,7 +25,6 @@ const bedroom: FloorMask = {
 // traced independently, so the rug remains visible in the open space beneath.
 export const FLOOR_MASKS: Record<string, FloorMask> = {
   bedroom,
-  "bedroom-2": bedroom,
   living: {
     outline: [[0,526],[239,393],[981,393],[1024,498],[1024,683],[0,683]],
     furniture: [
@@ -35,6 +34,8 @@ export const FLOOR_MASKS: Record<string, FloorMask> = {
       [[765,528],[779,531],[777,551],[767,550]],
       // Coffee table, including legs. Floor below the front panel remains open.
       [[369,408],[620,407],[655,453],[650,467],[647,535],[638,542],[639,559],[624,559],[623,541],[393,541],[391,558],[379,557],[379,538],[375,463],[369,461]],
+      [[380,534],[393,535],[391,558],[383,559]],
+      [[624,535],[637,534],[640,557],[630,558]],
       // Table plant and vase.
       [[478,375],[485,355],[500,352],[513,357],[524,366],[528,385],[516,392],[515,420],[488,420],[487,391]],
       // Foreground blue armchair, then exposed feet.
@@ -53,10 +54,10 @@ export const FLOOR_MASKS: Record<string, FloorMask> = {
       // Left sofa.
       [[21,351],[54,330],[162,320],[249,326],[274,344],[275,422],[267,435],[243,443],[225,430],[80,446],[23,423]],
       // Left blue chair, then its feet.
-      [[47,380],[78,373],[150,389],[224,409],[260,428],[272,450],[273,505],[267,530],[254,545],[159,571],[87,553],[55,529],[56,497],[46,429]],
-      [[148,567],[158,569],[155,586],[148,588]],
-      [[80,549],[90,553],[87,568],[80,567]],
-      [[258,537],[268,533],[264,563],[255,565]],
+      [[47,380],[78,373],[150,389],[177,418],[177,433],[203,440],[242,436],[264,434],[270,442],[273,505],[269,516],[251,523],[224,530],[194,541],[166,548],[150,548],[125,542],[101,535],[81,530],[67,526],[60,519],[56,497],[46,429]],
+      [[151,545],[167,545],[156,585],[149,588]],
+      [[80,527],[91,531],[84,554],[78,566],[73,565]],
+      [[260,521],[272,516],[277,550],[281,564],[274,567],[268,549]],
       // Opposite blue chair.
       [[474,438],[483,393],[529,397],[567,355],[597,337],[619,340],[626,350],[615,382],[609,438],[597,468],[593,479],[488,470],[479,465]],
       [[481,465],[491,468],[481,502],[474,502]],
@@ -138,6 +139,12 @@ export const FLOOR_MASKS: Record<string, FloorMask> = {
   },
 };
 
+const photoAlpha = new Map<string, ImageData>();
+
+export function registerFloorPixels(sceneId: string, pixels: ImageData) {
+  photoAlpha.set(sceneId, pixels);
+}
+
 function contains(poly: Pt[], x: number, y: number): boolean {
   let inside = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -148,6 +155,12 @@ function contains(poly: Pt[], x: number, y: number): boolean {
 }
 
 export function isVisibleFloor(sceneId: string, x: number, sourceY: number): boolean {
+  const pixels = photoAlpha.get(sceneId);
+  if (pixels) {
+    const px = Math.floor(x), py = Math.floor(sourceY);
+    return px >= 0 && py >= 0 && px < pixels.width && py < pixels.height &&
+      pixels.data[(py * pixels.width + px) * 4 + 3] > 127;
+  }
   const mask = FLOOR_MASKS[sceneId];
   return !!mask && contains(mask.outline, x, sourceY) &&
     !mask.furniture.some(poly => contains(poly, x, sourceY));

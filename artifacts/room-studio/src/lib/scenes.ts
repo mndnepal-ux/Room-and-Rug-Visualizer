@@ -6,6 +6,7 @@ export interface Scene {
   room: string;
   note: string;
   src: string;
+  maskSrc: string;
   /** Floor rectangle corners in 1024 × 683 photo px: far-left, far-right, near-right, near-left. */
   floor: [Pt, Pt, Pt, Pt];
   widthM: number;
@@ -24,6 +25,7 @@ export const SCENES: Scene[] = [
     room: "Living room",
     note: "Your photo · wood floor, cream sectional",
     src: photo("living"),
+    maskSrc: `${base}api/room-photos/living-mask.png`,
     floor: [[270, 400], [800, 400], [1190, 683], [-160, 683]],
     widthM: 5.2,
     depthM: 4.2,
@@ -32,22 +34,11 @@ export const SCENES: Scene[] = [
   },
   {
     id: "bedroom",
-    name: "Bedroom 1",
+    name: "Bedroom",
     room: "Bedroom",
-    note: "Your first bedroom photo · marble floor",
-    src: photo("bedroom"),
-    floor: [[148, 433], [807, 433], [1220, 683], [-220, 683]],
-    widthM: 4.4,
-    depthM: 3.6,
-    floorTone: "#e1ceba",
-    defaultPos: { x: 2.2, y: 2.3 },
-  },
-  {
-    id: "bedroom-2",
-    name: "Bedroom 2",
-    room: "Bedroom",
-    note: "Your second bedroom photo · marble floor",
+    note: "Your bedroom photo · marble floor",
     src: photo("bedroom-2"),
+    maskSrc: `${base}api/room-photos/bedroom-mask.png`,
     floor: [[148, 433], [807, 433], [1220, 683], [-220, 683]],
     widthM: 4.4,
     depthM: 3.6,
@@ -60,6 +51,7 @@ export const SCENES: Scene[] = [
     room: "Lobby",
     note: "Your photo · lounge seating, marble floor",
     src: photo("lobby"),
+    maskSrc: `${base}api/room-photos/lobby-mask.png`,
     floor: [[277, 350], [817, 350], [1280, 683], [-190, 683]],
     widthM: 6,
     depthM: 5,
@@ -73,6 +65,7 @@ export const SCENES: Scene[] = [
     room: "Kitchen",
     note: "Your photo · green cabinetry, dining island",
     src: photo("kitchen"),
+    maskSrc: `${base}api/room-photos/dining-mask.png`,
     floor: [[240, 442], [718, 442], [1130, 683], [-170, 683]],
     widthM: 4,
     depthM: 3.8,
@@ -85,6 +78,7 @@ export const SCENES: Scene[] = [
     room: "Office",
     note: "Your photo · executive desk, meeting table",
     src: photo("office"),
+    maskSrc: `${base}api/room-photos/loft-mask.png`,
     floor: [[192, 391], [711, 391], [1160, 683], [-210, 683]],
     widthM: 5,
     depthM: 4,

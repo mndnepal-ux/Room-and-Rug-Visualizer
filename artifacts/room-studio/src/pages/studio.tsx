@@ -6,7 +6,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { SCENES, CANVAS_W, CANVAS_H, CROP_Y, type Scene } from "@/lib/scenes";
 import { CATALOG, makeRugTexture, rugThumb, type Rug, type Category, type ColorFamily } from "@/lib/rugs";
-import { drawRoom, drawDetail, drawPlan, hitRug, unproject, movementBounds, type RugPlacement, type TexSource } from "@/lib/render";
+import { drawRoom, drawDetail, drawPlan, hitRug, unproject, movementBounds, registerPhotoFloorMask, type RugPlacement, type TexSource } from "@/lib/render";
 import { isVisibleFloor } from "@/lib/floor-masks";
 import {
   putUpload, getUploads, deleteUpload, putThumb, getThumb, deleteThumb,
@@ -46,7 +46,8 @@ interface UploadRug extends Rug { img: HTMLImageElement; thumb: string }
 function readUrlConfig() {
   const q = new URLSearchParams(window.location.search);
   const n = (k: string) => (q.get(k) != null && !isNaN(Number(q.get(k))) ? Number(q.get(k)) : undefined);
-  return { scene: q.get("scene") ?? undefined, rug: q.get("rug") ?? undefined, w: n("w"), h: n("h"), x: n("x"), y: n("y"), r: n("r") };
+  const scene = q.get("scene") === "bedroom-2" ? "bedroom" : q.get("scene");
+  return { scene: scene ?? undefined, rug: q.get("rug") ?? undefined, w: n("w"), h: n("h"), x: n("x"), y: n("y"), r: n("r") };
 }
 
 function CtlImpl({ label, value, children }: { label: string; value: string; children: React.ReactNode }) {
@@ -106,9 +107,13 @@ export default function Studio() {
   // Load room photos
   const loadRooms = useCallback(() => {
     setRoomErr(null);
-    Promise.all(SCENES.map((s) => loadImage(s.src).then((i) => [s.id, i] as const)))
+    Promise.all(SCENES.map(async (s) => {
+      const [photo, mask] = await Promise.all([loadImage(s.src), loadImage(s.maskSrc)]);
+      registerPhotoFloorMask(s.id, mask);
+      return [s.id, photo] as const;
+    }))
       .then((pairs) => setRoomImgs(Object.fromEntries(pairs)))
-      .catch(() => setRoomErr("The room photographs could not be loaded."));
+      .catch(() => setRoomErr("A room photograph or its floor mask could not be loaded. Please retry."));
   }, []);
   useEffect(loadRooms, [loadRooms]);
 
@@ -438,7 +443,7 @@ export default function Studio() {
   const openDesign = (d: SavedDesign) => {
     const r = allRugs.find((x) => x.id === d.rugId);
     if (!r) { toast({ title: "Rug missing", description: "That uploaded rug has been removed from this device.", variant: "destructive" }); return; }
-    setSceneId(d.sceneId);
+    setSceneId(d.sceneId === "bedroom-2" ? "bedroom" : d.sceneId);
     setRugId(d.rugId);
     setPlace(d.placement);
     setShowRug(true);
@@ -583,7 +588,7 @@ export default function Studio() {
         <div className="flex-1 min-h-0 overflow-y-auto scroll-thin p-4 space-y-3">
           <div className="pb-1">
             <p className="text-sm font-medium">Your room photos</p>
-            <p className="text-xs text-muted-foreground mt-1">6 rooms · 2 bedrooms · 1 lobby</p>
+            <p className="text-xs text-muted-foreground mt-1">5 rooms · 1 bedroom · 1 lobby</p>
           </div>
           {SCENES.map((s, i) => (
             <button key={s.id} data-testid={`card-scene-${s.id}`} onClick={() => chooseScene(s)}

@@ -46,7 +46,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   return result;
 };
 
-export const getGetRoomPhotographUrl = (filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp',) => {
+export const getGetRoomPhotographUrl = (filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp' | 'living-mask.png' | 'bedroom-mask.png' | 'lobby-mask.png' | 'dining-mask.png' | 'loft-mask.png',) => {
 
 
 
@@ -55,9 +55,9 @@ export const getGetRoomPhotographUrl = (filename: 'living.webp' | 'bedroom.webp'
 }
 
 /**
- * @summary Serve one of the six supplied room photographs
+ * @summary Serve a supplied room photograph or its photo-aligned floor mask
  */
-export const getRoomPhotograph = async (filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp', options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+export const getRoomPhotograph = async (filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp' | 'living-mask.png' | 'bedroom-mask.png' | 'lobby-mask.png' | 'dining-mask.png' | 'loft-mask.png', options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
 
   return customFetch<Blob>(getGetRoomPhotographUrl(filename),
   {
@@ -72,14 +72,14 @@ export const getRoomPhotograph = async (filename: 'living.webp' | 'bedroom.webp'
 
 
 
-export const getGetRoomPhotographQueryKey = (filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp',) => {
+export const getGetRoomPhotographQueryKey = (filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp' | 'living-mask.png' | 'bedroom-mask.png' | 'lobby-mask.png' | 'dining-mask.png' | 'loft-mask.png',) => {
     return [
     `/api/room-photos/${filename}`
     ] as const;
     }
 
 
-export const getGetRoomPhotographQueryOptions = <TData = Awaited<ReturnType<typeof getRoomPhotograph>>, TError = ErrorType<void>>(filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp', options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoomPhotograph>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetRoomPhotographQueryOptions = <TData = Awaited<ReturnType<typeof getRoomPhotograph>>, TError = ErrorType<void>>(filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp' | 'living-mask.png' | 'bedroom-mask.png' | 'lobby-mask.png' | 'dining-mask.png' | 'loft-mask.png', options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoomPhotograph>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -102,11 +102,11 @@ export type GetRoomPhotographQueryError = ErrorType<void>
 
 
 /**
- * @summary Serve one of the six supplied room photographs
+ * @summary Serve a supplied room photograph or its photo-aligned floor mask
  */
 
 export function useGetRoomPhotograph<TData = Awaited<ReturnType<typeof getRoomPhotograph>>, TError = ErrorType<void>>(
- filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp', options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoomPhotograph>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ filename: 'living.webp' | 'bedroom.webp' | 'bedroom-2.webp' | 'lobby.webp' | 'kitchen.webp' | 'office.webp' | 'living-mask.png' | 'bedroom-mask.png' | 'lobby-mask.png' | 'dining-mask.png' | 'loft-mask.png', options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRoomPhotograph>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 

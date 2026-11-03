@@ -9,10 +9,10 @@ import * as zod from 'zod';
 
 
 /**
- * @summary Serve one of the six supplied room photographs
+ * @summary Serve a supplied room photograph or its photo-aligned floor mask
  */
 export const GetRoomPhotographParams = zod.object({
-  "filename": zod.enum(['living.webp', 'bedroom.webp', 'bedroom-2.webp', 'lobby.webp', 'kitchen.webp', 'office.webp'])
+  "filename": zod.enum(['living.webp', 'bedroom.webp', 'bedroom-2.webp', 'lobby.webp', 'kitchen.webp', 'office.webp', 'living-mask.png', 'bedroom-mask.png', 'lobby-mask.png', 'dining-mask.png', 'loft-mask.png'])
 })
 
 export const GetRoomPhotographResponse = zod.unknown()

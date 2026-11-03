@@ -15,19 +15,23 @@ paths:
     get:
       operationId: getRoomPhotograph
       tags: [rooms]
-      summary: Serve one of the six supplied room photographs
+      summary: Serve a supplied room photograph or its photo-aligned floor mask
       parameters:
         - in: path
           name: filename
           required: true
           schema:
             type: string
-            enum: [living.webp, bedroom.webp, bedroom-2.webp, lobby.webp, kitchen.webp, office.webp]
+            enum: [living.webp, bedroom.webp, bedroom-2.webp, lobby.webp, kitchen.webp, office.webp, living-mask.png, bedroom-mask.png, lobby-mask.png, dining-mask.png, loft-mask.png]
       responses:
         "200":
           description: Room photograph
           content:
             image/webp:
+              schema:
+                type: string
+                format: binary
+            image/png:
               schema:
                 type: string
                 format: binary
