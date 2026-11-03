@@ -1,4 +1,5 @@
 import { CANVAS_H, CANVAS_W, CROP_Y, type Pt, type Scene } from "./scenes";
+import { FLOOR_MASKS, isVisibleFloor } from "./floor-masks";
 
 export interface RugPlacement {
   wCm: number;
@@ -119,6 +120,32 @@ function lightMap(scene: Scene, img: HTMLImageElement) {
 
 let layer: HTMLCanvasElement | null = null;
 let tmp: HTMLCanvasElement | null = null;
+const floorMaskCache = new Map<string, HTMLCanvasElement>();
+
+function floorMask(scene: Scene) {
+  let mask = floorMaskCache.get(scene.id);
+  if (mask) return mask;
+  mask = mk(CANVAS_W, CANVAS_H);
+  const mc = mask.getContext("2d")!;
+  const geometry = FLOOR_MASKS[scene.id];
+  if (geometry) {
+    const fill = (points: Pt[]) => {
+      mc.beginPath();
+      points.forEach(([x, y], i) => {
+        if (i === 0) mc.moveTo(x, y - CROP_Y);
+        else mc.lineTo(x, y - CROP_Y);
+      });
+      mc.closePath();
+      mc.fill();
+    };
+    mc.fillStyle = "#fff";
+    fill(geometry.outline);
+    mc.globalCompositeOperation = "destination-out";
+    geometry.furniture.forEach(fill);
+  }
+  floorMaskCache.set(scene.id, mask);
+  return mask;
+}
 
 export function drawRoom(c: CanvasRenderingContext2D, img: HTMLImageElement, scene: Scene, tex: TexSource | null, p: RugPlacement, showRug: boolean) {
   c.save();
@@ -161,10 +188,21 @@ export function drawRoom(c: CanvasRenderingContext2D, img: HTMLImageElement, sce
   lc.globalAlpha = 1;
   lc.globalCompositeOperation = "source-over";
 
-  c.shadowColor = "rgba(30,18,8,0.38)";
-  c.shadowBlur = 10;
-  c.shadowOffsetY = 3;
-  c.drawImage(layer, 0, 0);
+  // Mask the complete rug + shadow, not just its texture. Otherwise shadows
+  // can still darken furniture even when the textile itself is hidden.
+  tc.globalCompositeOperation = "source-over";
+  tc.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  tc.shadowColor = "rgba(30,18,8,0.38)";
+  tc.shadowBlur = 10;
+  tc.shadowOffsetY = 3;
+  tc.drawImage(layer, 0, 0);
+  tc.shadowColor = "transparent";
+  tc.shadowBlur = 0;
+  tc.shadowOffsetY = 0;
+  tc.globalCompositeOperation = "destination-in";
+  tc.drawImage(floorMask(scene), 0, 0);
+  tc.globalCompositeOperation = "source-over";
+  c.drawImage(tmp, 0, 0);
   c.restore();
 }
 
@@ -226,6 +264,7 @@ export function drawPlan(c: CanvasRenderingContext2D, scene: Scene, tex: TexSour
 }
 
 export function hitRug(scene: Scene, p: RugPlacement, px: number, py: number) {
+  if (!isVisibleFloor(scene.id, px, py + CROP_Y)) return false;
   const [mx, my] = unproject(scene, px, py);
   const t = (-p.rot * Math.PI) / 180;
   const dx = mx - p.x, dy = my - p.y;

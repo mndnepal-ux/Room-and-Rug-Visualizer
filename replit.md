@@ -30,7 +30,7 @@ A browser-based rug-in-room visualizer inspired by MyRoom Studio, with original 
 ## Architecture decisions
 
 - Use independently created imagery and rendering logic, not MyRoom Studio's proprietary assets or Explorug backend. **Why:** the reference was supplied for research and product inspiration, not as an authorized third-party rendering integration.
-- Describe the photographic perspective preview accurately, not as a fully interactive 3D room. **Why:** floor projection on a photograph cannot supply arbitrary viewpoints or furniture occlusion.
+- Describe the photographic perspective preview accurately, not as a fully interactive 3D room. **Why:** floor projection on a photograph cannot supply arbitrary viewpoints; furniture visibility uses masks traced for each original scene.
 - Keep this initial product browser-local. **Why:** its agreed workflow requires visualization, uploads and export, not accounts or cloud collaboration.
 
 ## Product
@@ -43,7 +43,7 @@ The user requested deep research of https://myroom.studio/ and a room visualizer
 
 ## Gotchas
 
-Uploaded rug images stay in the browser; shared links cannot transfer those images to another device. A photograph does not provide real-world measurement calibration or furniture occlusion.
+Uploaded rug images stay in the browser; shared links cannot transfer those images to another device. A photograph does not provide real-world measurement calibration. Replacing a room photograph requires retracing its floor and furniture masks.
 
 ## Pointers
 
