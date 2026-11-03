@@ -91,6 +91,12 @@ def correct_openings(room, alpha, image):
             [304,424],[320,412],[338,411],[345,411],[352,417],
             [360,425],[364,431],[375,438],[378,443],[378,449],[304,449],
         ], np.int32)], 255)
+        # Narrow opening below the left seat, above the chair-base region.
+        # The previous two regions left a floor-colored notch between them.
+        cv2.fillPoly(region, [np.array([
+            [202,432],[211,430],[223,435],[240,440],[251,443],
+            [251,454],[221,459],[193,463],[193,444],
+        ], np.int32)], 255)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
         detail_alpha = np.clip((gray - 45) / 30, 0, 1) * 255
         result[region > 0] = detail_alpha[region > 0].astype(np.uint8)
