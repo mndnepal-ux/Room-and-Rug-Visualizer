@@ -98,6 +98,7 @@ export default function Studio() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const libraryScrollRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const exitFullscreenRef = useRef<HTMLButtonElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const texCache = useRef(new Map<string, HTMLCanvasElement>());
   const dragOff = useRef<[number, number] | null>(null);
@@ -186,17 +187,43 @@ export default function Studio() {
 
   // fullscreen
   useEffect(() => {
-    const f = () => setIsFs(!!document.fullscreenElement);
+    const f = () => setIsFs(document.fullscreenElement === stageRef.current);
     document.addEventListener("fullscreenchange", f);
     return () => document.removeEventListener("fullscreenchange", f);
   }, []);
+  useEffect(() => {
+    if (!isFs) return;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const frame = requestAnimationFrame(() => exitFullscreenRef.current?.focus());
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !document.fullscreenElement) setIsFs(false);
+    };
+    document.addEventListener("keydown", escape);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.body.style.overflow = overflow;
+      document.removeEventListener("keydown", escape);
+    };
+  }, [isFs]);
+
   const toggleFs = async () => {
+    if (isFs) {
+      setIsFs(false);
+      if (document.fullscreenElement === stageRef.current) {
+        try { await document.exitFullscreen(); }
+        catch { toast({ title: "Use Esc to leave browser full screen" }); }
+      }
+      return;
+    }
+    // The expanded in-app view still works on mobile browsers and inside
+    // preview iframes that do not grant the browser Fullscreen API permission.
+    setIsFs(true);
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else if (stageRef.current?.requestFullscreen) await stageRef.current.requestFullscreen();
-      else toast({ title: "Fullscreen unavailable", description: "This browser does not allow fullscreen for this view." });
+      if (document.fullscreenEnabled && stageRef.current?.requestFullscreen)
+        await stageRef.current.requestFullscreen();
     } catch {
-      toast({ title: "Fullscreen blocked", description: "Your browser declined the fullscreen request.", variant: "destructive" });
+      // Keep the expanded view when native full screen is unavailable.
     }
   };
 
@@ -554,6 +581,10 @@ export default function Studio() {
 
       {tab === "rooms" && (
         <div className="flex-1 min-h-0 overflow-y-auto scroll-thin p-4 space-y-3">
+          <div className="pb-1">
+            <p className="text-sm font-medium">Your room photos</p>
+            <p className="text-xs text-muted-foreground mt-1">6 rooms · 2 bedrooms · 1 lobby</p>
+          </div>
           {SCENES.map((s, i) => (
             <button key={s.id} data-testid={`card-scene-${s.id}`} onClick={() => chooseScene(s)}
               className={`w-full flex gap-3 items-center rounded-xl p-2 text-left transition-all rise ${sceneId === s.id ? "bg-card ring-2 ring-primary shadow-md" : "hover:bg-card"}`} style={{ animationDelay: `${i * 40}ms` }}>
@@ -584,7 +615,7 @@ export default function Studio() {
             <div className="space-y-3">
               {designs.map((d) => (
                 <div key={d.id} className="rounded-xl bg-card border p-2 rise" data-testid={`card-design-${d.id}`}>
-                  {thumbs[d.id] ? <img src={thumbs[d.id]} alt={d.name} className="w-full aspect-[1024/884] object-cover rounded-lg" /> : <div className="w-full aspect-[1024/884] rounded-lg skel" />}
+                  {thumbs[d.id] ? <img src={thumbs[d.id]} alt={d.name} className="w-full object-cover rounded-lg" style={{ aspectRatio: `${CANVAS_W}/${CANVAS_H}` }} /> : <div className="w-full rounded-lg skel" style={{ aspectRatio: `${CANVAS_W}/${CANVAS_H}` }} />}
                   <div className="flex items-start justify-between gap-2 mt-2 px-1">
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{d.name}</p>
@@ -717,12 +748,15 @@ export default function Studio() {
                 className={`h-8 px-3 rounded-full text-xs font-medium flex items-center gap-1.5 border transition ${!showRug ? "bg-accent text-accent-foreground border-accent" : "hover:bg-muted"}`}>
                 {showRug ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}{showRug ? "After" : "Before"}
               </button>
-              <button data-testid="button-fullscreen" aria-label="Fullscreen" onClick={toggleFs} className="size-8 grid place-items-center rounded-full border hover:bg-muted transition"><Expand className="size-3.5" /></button>
+              <button data-testid="button-fullscreen" aria-label="Full screen" aria-pressed={isFs} onClick={toggleFs} className="h-8 px-3 flex items-center gap-1.5 rounded-full border hover:bg-muted transition text-xs font-medium"><Expand className="size-3.5" /><span>Full screen</span></button>
             </div>
           </div>
 
-          <div ref={stageRef} className={`relative flex-1 min-h-0 flex items-center justify-center ${isFs ? "bg-[#1b1714] p-6" : ""}`} data-testid="stage">
-            <div className="relative w-full max-h-full" style={{ aspectRatio: `${CANVAS_W}/${CANVAS_H}`, maxWidth: isFs ? `calc((100dvh - 48px) * ${CANVAS_W / CANVAS_H})` : "min(100%, calc((100dvh - 170px) * 1.158))" }}>
+          <div ref={stageRef} className={`flex items-center justify-center ${isFs ? "fixed inset-0 z-[100] bg-[#1b1714] p-3 sm:p-6" : "relative flex-1 min-h-0"}`} data-testid="stage">
+            {isFs && (
+              <button ref={exitFullscreenRef} onClick={toggleFs} data-testid="button-exit-fullscreen" className="absolute z-10 top-3 right-3 h-10 px-4 rounded-full bg-card shadow-lg border text-sm font-medium flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-primary"><Shrink className="size-4" />Exit full screen</button>
+            )}
+            <div className="relative w-full max-h-full" style={{ aspectRatio: `${CANVAS_W}/${CANVAS_H}`, maxWidth: isFs ? `calc((100dvh - 48px) * ${CANVAS_W / CANVAS_H})` : `min(100%, calc((100dvh - 170px) * ${CANVAS_W / CANVAS_H}))` }}>
               <canvas ref={canvasRef} width={CANVAS_W} height={CANVAS_H} data-testid="canvas-room"
                 onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
                 className={`w-full h-full rounded-xl shadow-[0_24px_60px_-28px_rgba(31,42,68,0.55)] touch-none select-none ${view === "room" && showRug ? (dragging ? "cursor-grabbing" : "cursor-grab") : ""}`} />
@@ -749,9 +783,6 @@ export default function Studio() {
                   {!showRug && <div className="absolute top-3 left-3 rounded-full bg-accent text-accent-foreground px-3 h-7 grid place-items-center text-[11px] font-medium pointer-events-none">Before: bare floor</div>}
                   {view === "room" && showRug && !dragging && (
                     <div className="absolute right-3 bottom-3 rounded-full bg-card/85 backdrop-blur px-3 h-7 hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground pointer-events-none"><Move className="size-3.5" />Drag rug or click anywhere on the floor</div>
-                  )}
-                  {isFs && (
-                    <button onClick={toggleFs} data-testid="button-exit-fullscreen" className="absolute top-3 right-3 h-8 px-3 rounded-full bg-card/90 text-xs flex items-center gap-1.5"><Shrink className="size-3.5" />Exit</button>
                   )}
                 </>
               )}

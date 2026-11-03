@@ -17,8 +17,16 @@ const client = new Storage({
 });
 
 export function catalogFile(filename: string) {
+  return publicImageFile("catalog/mnd", filename);
+}
+
+export function roomPhotoFile(filename: string) {
+  return publicImageFile("rooms/user-rooms", filename);
+}
+
+function publicImageFile(folder: string, filename: string) {
   const root = process.env.PUBLIC_OBJECT_SEARCH_PATHS?.split(",")[0]?.trim();
   if (!root) throw new Error("Public catalogue storage is not configured.");
   const [bucket, ...parts] = root.replace(/^\/+/, "").split("/");
-  return client.bucket(bucket).file(`${parts.join("/")}/catalog/mnd/${filename}`);
+  return client.bucket(bucket).file(`${parts.join("/")}/${folder}/${filename}`);
 }

@@ -1,6 +1,6 @@
 # Room Studio
 
-A browser-based rug-in-room visualizer inspired by MyRoom Studio, with original furnished scenes, textile designs, custom uploads, placement controls, local saves, and PNG export.
+A browser-based rug-in-room visualizer inspired by MyRoom Studio, with supplied room photographs, textile designs, custom uploads, placement controls, local saves, and PNG export.
 
 ## Run & Operate
 
@@ -11,7 +11,7 @@ A browser-based rug-in-room visualizer inspired by MyRoom Studio, with original 
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- No database or external rendering service is required. App Storage is used for optimized public MND design images; its environment is provisioned by the storage setup.
+- No database or external rendering service is required. App Storage is used for optimized public MND design images and supplied room photographs; its environment is provisioned by the storage setup.
 
 ## Stack
 
@@ -27,6 +27,7 @@ A browser-based rug-in-room visualizer inspired by MyRoom Studio, with original 
 - `artifacts/room-studio/` — visualizer application and original scene assets.
 - `docs/reference-research.md` — reference-site findings, sources, and research limitations.
 - `scripts/src/import-mnd-catalog.ts` — import and optimize the public MND collection into App Storage.
+- `scripts/src/import-room-photos.ts` — optimize and store the six supplied room photographs in App Storage.
 
 ## Architecture decisions
 
@@ -36,12 +37,13 @@ A browser-based rug-in-room visualizer inspired by MyRoom Studio, with original 
 
 ## Product
 
-Four furnished scenes, all 81 MND Nepal designs from collection pages 1–5, compatible original sample designs, search and pagination, custom image uploads, size/position/rotation controls, direct dragging, room/close-up/plan views, before/after, fullscreen, local saved designs, shareable catalogue configurations, and PNG downloads.
+Six supplied room scenes, all 81 MND Nepal designs from collection pages 1–5, compatible original sample designs, search and pagination, custom image uploads, size/position/rotation controls, direct dragging, room/close-up/plan views, before/after, full screen with an explicit exit and an expanded-view fallback, local saved designs, shareable catalogue configurations, and PNG downloads.
 
 ## User preferences
 
 The user requested deep research of https://myroom.studio/ and a room visualizer based on that workflow.
 The user requested all rug designs from pages 1–5 of https://modernnaturedesignnepal.com/collections, using the actual design images and original names.
+The user requested exactly six supplied room entries: Living Room, both Bedroom uploads, one Lobby, Kitchen, and Office. Keep both Bedroom entries, but do not duplicate Lobby.
 
 ## Gotchas
 

@@ -11,6 +11,30 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /room-photos/{filename}:
+    get:
+      operationId: getRoomPhotograph
+      tags: [rooms]
+      summary: Serve one of the six supplied room photographs
+      parameters:
+        - in: path
+          name: filename
+          required: true
+          schema:
+            type: string
+            enum: [living.webp, bedroom.webp, bedroom-2.webp, lobby.webp, kitchen.webp, office.webp]
+      responses:
+        "200":
+          description: Room photograph
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Room photograph not found
+        "503":
+          description: Room photograph temporarily unavailable
   /catalog/mnd/{filename}:
     get:
       operationId: getMndDesignImage

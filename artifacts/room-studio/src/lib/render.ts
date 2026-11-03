@@ -125,7 +125,7 @@ function lightMap(scene: Scene, img: HTMLImageElement) {
     l = mk(CANVAS_W, CANVAS_H);
     const c = l.getContext("2d")!;
     c.filter = "grayscale(1) contrast(0.75) brightness(1.5)";
-    c.drawImage(img, 0, -CROP_Y, CANVAS_W, CANVAS_W);
+    c.drawImage(img, 0, -CROP_Y, CANVAS_W, CANVAS_H);
     lightCache.set(scene.id, l);
   }
   return l;
@@ -164,7 +164,7 @@ export function drawRoom(c: CanvasRenderingContext2D, img: HTMLImageElement, sce
   c.save();
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.clearRect(0, 0, CANVAS_W, CANVAS_H);
-  c.drawImage(img, 0, -CROP_Y, CANVAS_W, CANVAS_W);
+  c.drawImage(img, 0, -CROP_Y, CANVAS_W, CANVAS_H);
   if (!showRug || !tex) { c.restore(); return; }
   layer ??= mk(CANVAS_W, CANVAS_H);
   tmp ??= mk(CANVAS_W, CANVAS_H);

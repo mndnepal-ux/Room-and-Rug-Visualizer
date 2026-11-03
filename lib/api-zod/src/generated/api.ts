@@ -9,6 +9,16 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Serve one of the six supplied room photographs
+ */
+export const GetRoomPhotographParams = zod.object({
+  "filename": zod.enum(['living.webp', 'bedroom.webp', 'bedroom-2.webp', 'lobby.webp', 'kitchen.webp', 'office.webp'])
+})
+
+export const GetRoomPhotographResponse = zod.unknown()
+
+
+/**
  * @summary Serve an imported Modern Nature Design Nepal rug image
  */
 export const getMndDesignImagePathFilenameRegExp = new RegExp('^mnd-rug-[0-9]{3}(-thumb)?\\.webp$');
