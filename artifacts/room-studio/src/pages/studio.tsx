@@ -4,9 +4,10 @@ import {
   Eye, EyeOff, Lock, Unlock, Move, HardDrive, ImagePlus, X, Check, FolderOpen,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { SCENES, CANVAS_W, CANVAS_H, type Scene } from "@/lib/scenes";
+import { SCENES, CANVAS_W, CANVAS_H, CROP_Y, type Scene } from "@/lib/scenes";
 import { CATALOG, makeRugTexture, rugThumb, type Rug, type Category, type ColorFamily } from "@/lib/rugs";
-import { drawRoom, drawDetail, drawPlan, hitRug, unproject, type RugPlacement, type TexSource } from "@/lib/render";
+import { drawRoom, drawDetail, drawPlan, hitRug, unproject, movementBounds, type RugPlacement, type TexSource } from "@/lib/render";
+import { isVisibleFloor } from "@/lib/floor-masks";
 import {
   putUpload, getUploads, deleteUpload, putThumb, getThumb, deleteThumb,
   loadDesigns, storeDesigns, type SavedDesign,
@@ -176,11 +177,12 @@ export default function Studio() {
     }
   };
 
+  const bounds = movementBounds(scene);
   const clampPlace = useCallback((p: RugPlacement): RugPlacement => ({
     ...p,
-    x: Math.max(0, Math.min(scene.widthM, p.x)),
-    y: Math.max(0, Math.min(scene.depthM, p.y)),
-  }), [scene]);
+    x: Math.max(bounds.minX, Math.min(bounds.maxX, p.x)),
+    y: Math.max(bounds.minY, Math.min(bounds.maxY, p.y)),
+  }), [bounds.minX, bounds.maxX, bounds.minY, bounds.maxY]);
 
   const update = (patch: Partial<RugPlacement>) => setPlace((p) => clampPlace({ ...p, ...patch }));
 
@@ -211,14 +213,14 @@ export default function Studio() {
     if (view !== "room" || !showRug) return;
     const [px, py] = toCanvas(e);
     const [mx, my] = unproject(scene, px, py);
-    if (my < -0.2) return;
+    if (!isVisibleFloor(scene.id, px, py + CROP_Y)) return;
     dragOff.current = hitRug(scene, place, px, py) ? [place.x - mx, place.y - my] : [0, 0];
     (e.target as Element).setPointerCapture(e.pointerId);
     setDragging(true);
     update({ x: mx + dragOff.current[0], y: my + dragOff.current[1] });
   };
   const onMove = (e: React.PointerEvent) => {
-    if (!dragging || !dragOff.current) return;
+    if (!dragOff.current) return;
     const [px, py] = toCanvas(e);
     const [mx, my] = unproject(scene, px, py);
     update({ x: mx + dragOff.current[0], y: my + dragOff.current[1] });
@@ -585,10 +587,10 @@ export default function Studio() {
       <div className="space-y-4">
         <span className="eyebrow">Position and rotation</span>
         <Ctl label="Across room" value={`${place.x.toFixed(2)} m`}>
-          <input type="range" className="range" min={0} max={scene.widthM} step={0.01} value={place.x} style={pct(place.x, 0, scene.widthM)} data-testid="input-x" onChange={(e) => update({ x: Number(e.target.value) })} />
+          <input type="range" className="range" min={bounds.minX} max={bounds.maxX} step={0.01} value={place.x} style={pct(place.x, bounds.minX, bounds.maxX)} data-testid="input-x" onChange={(e) => update({ x: Number(e.target.value) })} />
         </Ctl>
         <Ctl label="Depth" value={`${place.y.toFixed(2)} m from wall`}>
-          <input type="range" className="range" min={0} max={scene.depthM} step={0.01} value={place.y} style={pct(place.y, 0, scene.depthM)} data-testid="input-y" onChange={(e) => update({ y: Number(e.target.value) })} />
+          <input type="range" className="range" min={bounds.minY} max={bounds.maxY} step={0.01} value={place.y} style={pct(place.y, bounds.minY, bounds.maxY)} data-testid="input-y" onChange={(e) => update({ y: Number(e.target.value) })} />
         </Ctl>
         <Ctl label="Rotation" value={`${Math.round(place.rot)} deg`}>
           <div className="flex items-center gap-2">
@@ -680,7 +682,7 @@ export default function Studio() {
                   </div>
                   {!showRug && <div className="absolute top-3 left-3 rounded-full bg-accent text-accent-foreground px-3 h-7 grid place-items-center text-[11px] font-medium pointer-events-none">Before: bare floor</div>}
                   {view === "room" && showRug && !dragging && (
-                    <div className="absolute right-3 bottom-3 rounded-full bg-card/85 backdrop-blur px-3 h-7 hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground pointer-events-none"><Move className="size-3.5" />Drag the rug to place it</div>
+                    <div className="absolute right-3 bottom-3 rounded-full bg-card/85 backdrop-blur px-3 h-7 hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground pointer-events-none"><Move className="size-3.5" />Drag rug or click anywhere on the floor</div>
                   )}
                   {isFs && (
                     <button onClick={toggleFs} data-testid="button-exit-fullscreen" className="absolute top-3 right-3 h-8 px-3 rounded-full bg-card/90 text-xs flex items-center gap-1.5"><Shrink className="size-3.5" />Exit</button>

@@ -65,6 +65,19 @@ export function unproject(scene: Scene, px: number, py: number): Pt {
   return [u * scene.widthM, v * scene.depthM];
 }
 
+/** Include the entire photographed floor, not just the calibration rectangle. */
+export function movementBounds(scene: Scene) {
+  const outline = FLOOR_MASKS[scene.id]?.outline;
+  const points = outline?.map(([x, y]) => unproject(scene, x, y - CROP_Y))
+    .filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y)) ?? [];
+  return {
+    minX: Math.min(0, ...points.map(([x]) => x)),
+    maxX: Math.max(scene.widthM, ...points.map(([x]) => x)),
+    minY: Math.min(0, ...points.map(([, y]) => y)),
+    maxY: Math.max(scene.depthM, ...points.map(([, y]) => y)),
+  };
+}
+
 export function rugCorners(scene: Scene, p: RugPlacement): Pt[] {
   const w = p.wCm / 100, h = p.hCm / 100, t = (p.rot * Math.PI) / 180;
   return [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]].map(([a, b]) => {
