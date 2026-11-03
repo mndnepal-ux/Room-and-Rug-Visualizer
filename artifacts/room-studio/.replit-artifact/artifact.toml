@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Room Studio"
+description = "An interactive room and rug visualization studio with furnished scenes, rug collections, custom uploads, placement controls and downloadable room previews."
+version = "1.0.0"
+id = "artifacts/room-studio"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24538
+
+[services.development]
+run = "pnpm --filter @workspace/room-studio run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/room-studio", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/room-studio/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24538"
+BASE_PATH = "/"

@@ -1,15 +1,17 @@
-# [Project name]
+# Room Studio
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A browser-based rug-in-room visualizer inspired by MyRoom Studio, with original furnished scenes, textile designs, custom uploads, placement controls, local saves, and PNG export.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- Primary managed workflow: `artifacts/room-studio: web`
+- `pnpm --filter @workspace/room-studio run typecheck` — check the visualizer
+- `pnpm --filter @workspace/api-server run dev` — optional shared API server; not needed by the visualizer
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- No database, secrets, or external rendering service is required by the visualizer.
 
 ## Stack
 
@@ -22,23 +24,26 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/room-studio/` — visualizer application and original scene assets.
+- `docs/reference-research.md` — reference-site findings, sources, and research limitations.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Use independently created imagery and rendering logic, not MyRoom Studio's proprietary assets or Explorug backend. **Why:** the reference was supplied for research and product inspiration, not as an authorized third-party rendering integration.
+- Describe the photographic perspective preview accurately, not as a fully interactive 3D room. **Why:** floor projection on a photograph cannot supply arbitrary viewpoints or furniture occlusion.
+- Keep this initial product browser-local. **Why:** its agreed workflow requires visualization, uploads and export, not accounts or cloud collaboration.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Four furnished scenes, an original searchable/filterable rug collection, custom image uploads, size/position/rotation controls, direct dragging, room/close-up/plan views, before/after, fullscreen, local saved designs, shareable catalogue configurations, and PNG downloads.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+The user requested deep research of https://myroom.studio/ and a room visualizer based on that workflow.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+Uploaded rug images stay in the browser; shared links cannot transfer those images to another device. A photograph does not provide real-world measurement calibration or furniture occlusion.
 
 ## Pointers
 
