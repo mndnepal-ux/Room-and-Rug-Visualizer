@@ -20,3 +20,9 @@ Do not use approximate thick strokes for office chair spokes: they preserve stri
 **Why:** Continued reports in Living Room, Lobby, and Office exposed remaining shadow cutouts; enlarged source inspection also revealed that the office desk return extends lower than the initial seed geometry.
 
 **How to apply:** Constrain corrections to inspected openings, derive thin dark metal edges from actual photo pixels, and separately protect solid desk panels. Check each reported room in the live app, not only generated diagnostic overlays.
+
+Validate the entire underside of a sofa against the photo's wooden rail, not the visible edge of its dark floor shadow.
+
+**Why:** User close-ups clarified that the persistent “floor overlapping the rug” included a long stepped band of wood-floor shadow along the sectional, a gray strip beneath the lobby sofa, and small wedges beside chair feet. Full-room screenshots concealed these errors.
+
+**How to apply:** Compare enlarged source and mask crops at the exact reported locations. Keep only the rail and feet opaque, and check floor immediately below diagonal rails and cabinet plinths. Avoid accepting a distant full-room view as proof that these edges are correct.

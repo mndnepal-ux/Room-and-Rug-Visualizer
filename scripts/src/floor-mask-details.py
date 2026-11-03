@@ -21,8 +21,12 @@ def correct_openings(room, alpha, image):
         poly([(373,538),(649,538),(649,568),(373,568)], 255)
         poly([(383,538),(397,538),(394,556),(383,556)], 0)
         poly([(624,538),(635,538),(640,556),(628,556)], 0)
-        # Floor to the right of the sectional foot, beneath its overhang.
-        poly([(780,516),(802,515),(802,538),(779,538)], 255)
+        # The long diagonal below the sectional is cast shadow on wood floor,
+        # not part of the sofa. Trace the underside of its wooden rail rather
+        # than the stepped shadow boundary chosen by segmentation.
+        poly([(674,426),(700,447),(728,473),(752,494),(767,508),
+              (779,508),(802,508),(802,551),(665,551),(665,439)], 255)
+        poly([(767,504),(780,504),(778,532),(774,535),(768,534)], 0)
     elif room == "lobby":
         # Rebuild the complete open table frame, rather than patching isolated
         # beige holes. The lower ring is a tube, never a solid ellipse/disk.
@@ -33,6 +37,20 @@ def correct_openings(room, alpha, image):
         line([(450,423),(449,463)], 5)
         line([(358,428),(358,479)], 5)
         line([(381,429),(381,446)], 4)
+        # The gray strip under the right sofa is floor in shadow. Keep the
+        # wooden base and individual feet, not the entire shadow rectangle.
+        poly([(819,405),(845,416),(875,429),(904,441),(917,442),
+              (980,442),(980,461),(817,461)], 255)
+        poly([(907,438),(915,438),(915,451),(909,451)], 0)
+        poly([(820,405),(826,407),(826,414),(821,412)], 0)
+        # Smooth foreground chair underside. Segmentation had retained small
+        # beige floor wedges around this curve and its feet.
+        poly([(66,518),(76,525),(95,533),(115,540),(135,545),
+              (155,548),(175,548),(195,545),(215,539),(235,531),
+              (254,524),(268,518),(279,556),(279,593),(65,593)], 255)
+        poly([(80,526),(93,530),(82,552),(78,560),(74,560),(74,556)], 0)
+        poly([(151,547),(162,547),(157,583),(154,587),(150,586)], 0)
+        poly([(259,518),(268,515),(272,535),(277,554),(273,555),(267,541)], 0)
     elif room == "loft":
         # Entire floor between both swivel chair bases. Explicit contours
         # preserve the real spokes and wheels without preserving reflections.
@@ -45,6 +63,9 @@ def correct_openings(room, alpha, image):
         # Bare floor left of the chair column, formerly a rectangular cutout.
         poly([(194,449),(211,437),(225,443),(241,447),(241,452),
               (217,454),(197,461)], 255)
+        # Clear the floor shadow just below the cabinet's wooden plinth.
+        poly([(68,482),(166,482),(192,457),(195,460),(174,487),
+              (66,490)], 255)
     result = cv2.resize(mask, (1024, 683), interpolation=cv2.INTER_AREA)
     if room == "loft":
         # Actual black metal has a clear luminance boundary here. Work only
