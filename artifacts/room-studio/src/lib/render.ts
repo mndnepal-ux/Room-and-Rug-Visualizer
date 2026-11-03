@@ -124,8 +124,31 @@ function lightMap(scene: Scene, img: HTMLImageElement) {
   if (!l) {
     l = mk(CANVAS_W, CANVAS_H);
     const c = l.getContext("2d")!;
-    c.filter = "grayscale(1) contrast(0.75) brightness(1.5)";
-    c.drawImage(img, 0, -CROP_Y, CANVAS_W, CANVAS_H);
+    const visibleFloor = mk(CANVAS_W, CANVAS_H);
+    const fc = visibleFloor.getContext("2d")!;
+    fc.drawImage(img, 0, -CROP_Y, CANVAS_W, CANVAS_H);
+    fc.globalCompositeOperation = "destination-in";
+    fc.drawImage(floorMask(scene), 0, 0);
+    // Blur only floor pixels (alpha-weighted by Canvas), not furniture. The
+    // old sharp photo multiply copied grout, reflections and chair silhouettes
+    // onto the rug, which made the original floor appear through the textile.
+    c.filter = "grayscale(1) blur(18px)";
+    c.drawImage(visibleFloor, 0, 0);
+    c.filter = "none";
+    const pixels = c.getImageData(0, 0, CANVAS_W, CANVAS_H);
+    const values: number[] = [];
+    for (let i = 0; i < pixels.data.length; i += 4)
+      if (pixels.data[i + 3] > 240) values.push(pixels.data[i]);
+    values.sort((a, b) => a - b);
+    const reference = values[Math.floor(values.length / 2)] || 220;
+    for (let i = 0; i < pixels.data.length; i += 4) {
+      const shade = pixels.data[i + 3] > 0
+        ? Math.round(255 * Math.max(0.82, Math.min(1, pixels.data[i] / reference)))
+        : 255;
+      pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = shade;
+      pixels.data[i + 3] = 255;
+    }
+    c.putImageData(pixels, 0, 0);
     lightCache.set(scene.id, l);
   }
   return l;

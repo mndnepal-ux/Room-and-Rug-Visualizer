@@ -65,8 +65,53 @@ for room, filename in files.items():
     refined = np.where((labels == cv2.GC_FGD) | (labels == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
     refined[fine_objects] = 0
 
+    # Color segmentation cannot distinguish a gray cast shadow from a gray
+    # chair leg. Correct the inspected ambiguous regions explicitly; do not
+    # expand furniture masks to include shadows or reflections on bare floor.
+    def polygon(points, value):
+        cv2.fillPoly(refined, [np.array(points, np.int32)], value)
+
+    if room == "loft":
+        # Floor between the left chair's spokes, including its reflected legs.
+        region = np.zeros_like(refined)
+        cv2.fillPoly(region, [np.array([
+            [204,447],[239,447],[247,443],[268,447],[310,469],
+            [320,490],[198,500],[194,482],
+        ], np.int32)], 255)
+        refined[region > 0] = np.where(luminance[region > 0] < 95, 0, 255)
+        # The opening below the back of the desk is floor, not a solid panel.
+        region[:] = 0
+        cv2.fillPoly(region, [np.array([
+            [307,424],[322,413],[341,413],[356,420],[369,426],
+            [377,436],[373,444],[301,444],
+        ], np.int32)], 255)
+        refined[region > 0] = np.where(luminance[region > 0] < 65, 0, 255)
+    elif room == "lobby":
+        # Open floor behind the central gold post. Preserve the actual rear
+        # post/ring, not the beige rectangular patch produced by GrabCut.
+        polygon([[362,431],[377,431],[377,442],[362,444]], 255)
+        polygon([[386,431],[405,431],[405,443],[386,442]], 255)
+        polygon([[379,430],[384,430],[384,444],[379,444]], 0)
+    elif room == "living":
+        # This is the solid bottom rail, not an opening underneath the table.
+        polygon([[474,530],[635,530],[635,537],[474,537]], 0)
+
     # A subpixel transition removes jagged raster edges without a wide halo.
     alpha = cv2.GaussianBlur(refined, (3, 3), 0.45)
+    # Guard the actual bare-floor patches exposed by the recordings, plus
+    # solid furniture and thin parts that must never receive carpet.
+    probes = {
+        "living": {"floor": [(500,570),(710,580)], "object": [(550,534),(386,548)]},
+        "bedroom": {"floor": [(500,650),(730,490)], "object": [(450,490),(856,410)]},
+        "lobby": {"floor": [(369,437),(391,438),(400,500)], "object": [(381,437),(359,465)]},
+        "dining": {"floor": [(350,570),(720,610)], "object": [(450,590),(325,480)]},
+        "loft": {"floor": [(224,477),(277,477),(320,433),(345,434)], "object": [(256,485),(306,428)]},
+    }
+    for kind, points in probes[room].items():
+        for x, y in points:
+            value = int(alpha[y, x])
+            assert (value > 240 if kind == "floor" else value < 20), \
+                f"{room}: incorrect {kind} alpha {value} at {x},{y}"
     rgba = np.full((683, 1024, 4), 255, np.uint8)
     rgba[:, :, 3] = alpha
     cv2.imwrite(str(output_dir / f"{room}-mask.png"), rgba)
