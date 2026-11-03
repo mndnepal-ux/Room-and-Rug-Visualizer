@@ -27,6 +27,10 @@ def correct_openings(room, alpha, image):
         poly([(674,426),(700,447),(728,473),(752,494),(767,508),
               (779,508),(802,508),(802,551),(665,551),(665,439)], 255)
         poly([(767,504),(780,504),(778,532),(774,535),(768,534)], 0)
+        # The foreground armchair's long front leg reaches the bottom edge
+        # of the photo. It was absent from the original furniture seeds.
+        poly([(878,621),(898,621),(895,638),(891,661),
+              (887,683),(874,683),(876,655)], 0)
     elif room == "lobby":
         # The pale vertical area behind the blue chair is the left sofa's
         # front panel, down to its plinth at y=498. It is not exposed floor.
