@@ -28,6 +28,13 @@ def correct_openings(room, alpha, image):
               (779,508),(802,508),(802,551),(665,551),(665,439)], 255)
         poly([(767,504),(780,504),(778,532),(774,535),(768,534)], 0)
     elif room == "lobby":
+        # The pale vertical area behind the blue chair is the left sofa's
+        # front panel, down to its plinth at y=498. It is not exposed floor.
+        poly([(24,378),(47,378),(47,423),(53,463),(63,498),
+              (30,499),(24,489)], 0)
+        # Immediately below that plinth is floor, including the narrow shadow
+        # between the plant stand and the curved side of the blue chair.
+        poly([(46,499),(57,499),(60,509),(62,516),(46,516)], 255)
         # Rebuild the complete open table frame, rather than patching isolated
         # beige holes. The lower ring is a tube, never a solid ellipse/disk.
         poly([(283,425),(455,425),(455,485),(283,485)], 255)
@@ -77,12 +84,21 @@ def correct_openings(room, alpha, image):
             [404,441],[449,441],[474,437],[505,437],[505,501],[190,501],
         ], np.int32)], 255)
         cv2.fillPoly(region, [np.array([
-            [306,437],[321,417],[339,413],[345,415],[351,420],
-            [368,438],[378,443],[378,449],[305,449],
+            [304,424],[320,412],[338,411],[345,411],[352,417],
+            [360,425],[364,431],[375,438],[378,443],[378,449],[304,449],
         ], np.int32)], 255)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
         detail_alpha = np.clip((gray - 45) / 30, 0, 1) * 255
         result[region > 0] = detail_alpha[region > 0].astype(np.uint8)
+        # Preserve the two cream seat cushions visible beside the opening.
+        # Their edges must not be mistaken for the similarly colored floor.
+        cv2.fillPoly(result, [np.array([
+            [294,405],[306,408],[316,412],[319,414],[308,420],
+            [296,426],[290,426],
+        ], np.int32)], 0)
+        cv2.fillPoly(result, [np.array([
+            [366,406],[377,405],[382,414],[382,426],[373,422],[362,416],
+        ], np.int32)], 0)
         # The right-hand desk return is a solid panel down to y=458, not
         # an opening at y=435. Preserve it after correcting the chair bases.
         cv2.fillPoly(result, [np.array([

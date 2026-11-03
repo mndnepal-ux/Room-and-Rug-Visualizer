@@ -26,3 +26,9 @@ Validate the entire underside of a sofa against the photo's wooden rail, not the
 **Why:** User close-ups clarified that the persistent “floor overlapping the rug” included a long stepped band of wood-floor shadow along the sectional, a gray strip beneath the lobby sofa, and small wedges beside chair feet. Full-room screenshots concealed these errors.
 
 **How to apply:** Compare enlarged source and mask crops at the exact reported locations. Keep only the rail and feet opaque, and check floor immediately below diagonal rails and cabinet plinths. Avoid accepting a distant full-room view as proof that these edges are correct.
+
+Pale regions are not necessarily floor: the Lobby sofa has a tall cream front panel behind the foreground chair, and the Office chairs expose cream seat tips beside the central floor opening.
+
+**Why:** User close-ups highlighted these ambiguous boundaries. Treating every pale strip as a shadow/floor correction risks painting carpet over upholstery instead.
+
+**How to apply:** Establish the physical object boundary from the original photo before clearing an ambiguous region; separately protect upholstery and fill only the narrow floor gap immediately beneath it.
