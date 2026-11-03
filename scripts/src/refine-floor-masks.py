@@ -9,6 +9,12 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import importlib.util
+
+detail_spec = importlib.util.spec_from_file_location(
+    "floor_mask_details", Path(__file__).with_name("floor-mask-details.py"))
+details = importlib.util.module_from_spec(detail_spec)
+detail_spec.loader.exec_module(details)
 
 seed_file, image_dir, output_dir = map(Path, sys.argv[1:4])
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -96,16 +102,18 @@ for room, filename in files.items():
         # This is the solid bottom rail, not an opening underneath the table.
         polygon([[474,530],[635,530],[635,537],[474,537]], 0)
 
+    refined = details.correct_openings(room, refined, image)
     # A subpixel transition removes jagged raster edges without a wide halo.
     alpha = cv2.GaussianBlur(refined, (3, 3), 0.45)
     # Guard the actual bare-floor patches exposed by the recordings, plus
     # solid furniture and thin parts that must never receive carpet.
     probes = {
-        "living": {"floor": [(500,570),(710,580)], "object": [(550,534),(386,548)]},
+        "living": {"floor": [(500,570),(710,580),(500,542),(793,530)], "object": [(550,534),(386,548)]},
         "bedroom": {"floor": [(500,650),(730,490)], "object": [(450,490),(856,410)]},
-        "lobby": {"floor": [(369,437),(391,438),(400,500)], "object": [(381,437),(359,465)]},
+        "lobby": {"floor": [(369,437),(391,438),(400,500),(340,460),(400,468)], "object": [(381,437),(359,465)]},
         "dining": {"floor": [(350,570),(720,610)], "object": [(450,590),(325,480)]},
-        "loft": {"floor": [(224,477),(277,477),(320,433),(345,434)], "object": [(256,485),(306,428)]},
+        "loft": {"floor": [(224,477),(277,477),(320,433),(345,434),(430,485)],
+                 "object": [(256,485),(306,428),(480,446),(517,453)]},
     }
     for kind, points in probes[room].items():
         for x, y in points:

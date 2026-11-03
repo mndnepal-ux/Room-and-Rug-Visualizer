@@ -14,3 +14,9 @@ Color-based segmentation alone is insufficient for shadowed floor between furnit
 **Why:** A second user recording showed that plausible full-room overlays still hid floor-colored patches between office chair spokes and behind a gold table post. A sharp photo-based lighting multiply also copied floor reflections and grout onto the carpet.
 
 **How to apply:** Inspect enlarged openings, not just furniture silhouettes. Transfer only low-frequency, floor-only lighting to the rug. Version mask URLs after replacing stored assets and clear the server asset cache.
+
+Do not use approximate thick strokes for office chair spokes: they preserve strips of bare floor around the real metal. Inspect both kinds of error: floor cutouts and carpet painted onto furniture.
+
+**Why:** Continued reports in Living Room, Lobby, and Office exposed remaining shadow cutouts; enlarged source inspection also revealed that the office desk return extends lower than the initial seed geometry.
+
+**How to apply:** Constrain corrections to inspected openings, derive thin dark metal edges from actual photo pixels, and separately protect solid desk panels. Check each reported room in the live app, not only generated diagnostic overlays.
