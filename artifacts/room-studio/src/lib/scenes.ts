@@ -19,7 +19,7 @@ const base = import.meta.env.BASE_URL;
 const photo = (id: string) => `${base}api/room-photos/${id}.webp`;
 // Change the version whenever stored masks change, and restart the API to
 // clear its memory cache, so corrected bytes replace browser-cached masks.
-const mask = (id: string) => `${base}api/room-photos/${id}-mask.png?v=20261103d`;
+const mask = (id: string) => `${base}api/room-photos/${id}-mask.png?v=20261103e`;
 
 export const SCENES: Scene[] = [
   {

@@ -85,7 +85,10 @@ export default function Studio() {
   const [catalogImages, setCatalogImages] = useState<Record<string, HTMLImageElement>>({});
   const [catalogError, setCatalogError] = useState<{ id: string; message: string } | null>(null);
   const [catalogRetry, setCatalogRetry] = useState(0);
-  const [roomImgs, setRoomImgs] = useState<Record<string, HTMLImageElement>>({});
+  const [roomAssets, setRoomAssets] = useState<Record<string, {
+    photo: HTMLImageElement; mask: HTMLImageElement; maskSrc: string;
+  }>>({});
+  const roomLoadGeneration = useRef(0);
   const [roomErr, setRoomErr] = useState<string | null>(null);
   const [designs, setDesigns] = useState<SavedDesign[]>(() => loadDesigns());
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
@@ -104,17 +107,24 @@ export default function Studio() {
   const texCache = useRef(new Map<string, HTMLCanvasElement>());
   const dragOff = useRef<[number, number] | null>(null);
 
-  // Load room photos
+  // Keep the mask with its photo in React state. Module-level render caches can
+  // be replaced by hot reload while React retains the already loaded photos.
+  const roomAssetKey = SCENES.map((s) => `${s.src}|${s.maskSrc}`).join(";");
   const loadRooms = useCallback(() => {
+    const generation = ++roomLoadGeneration.current;
     setRoomErr(null);
     Promise.all(SCENES.map(async (s) => {
       const [photo, mask] = await Promise.all([loadImage(s.src), loadImage(s.maskSrc)]);
-      registerPhotoFloorMask(s.id, mask);
-      return [s.id, photo] as const;
+      return [s.id, { photo, mask, maskSrc: s.maskSrc }] as const;
     }))
-      .then((pairs) => setRoomImgs(Object.fromEntries(pairs)))
-      .catch(() => setRoomErr("A room photograph or its floor mask could not be loaded. Please retry."));
-  }, []);
+      .then((pairs) => {
+        if (generation === roomLoadGeneration.current) setRoomAssets(Object.fromEntries(pairs));
+      })
+      .catch(() => {
+        if (generation === roomLoadGeneration.current)
+          setRoomErr("A room photograph or its floor mask could not be loaded. Please retry.");
+      });
+  }, [roomAssetKey]);
   useEffect(loadRooms, [loadRooms]);
 
   // Load only the selected full-size catalogue texture. Thumbnails use separate
@@ -174,14 +184,18 @@ export default function Studio() {
   const rugLoading = !!rug.imageSrc && !catalogImages[rug.id];
   const activeCatalogError = catalogError?.id === rug.id ? catalogError.message : null;
 
-  const roomImg = roomImgs[scene.id];
+  const roomAsset = roomAssets[scene.id]?.maskSrc === scene.maskSrc ? roomAssets[scene.id] : undefined;
+  const roomImg = roomAsset?.photo;
 
   const paint = useCallback((ctx: CanvasRenderingContext2D, v: View) => {
     if (!roomImg) return;
+    // Rehydrate renderer caches from retained image state after any module
+    // update. Never paint a photo using an absent or older mask.
+    registerPhotoFloorMask(scene.id, roomAsset!.mask);
     if (v === "room") drawRoom(ctx, roomImg, scene, tex, place, showRug);
     else if (v === "detail") drawDetail(ctx, roomImg, scene, tex, place, showRug);
     else drawPlan(ctx, scene, tex, place, showRug);
-  }, [roomImg, scene, tex, place, showRug]);
+  }, [roomImg, roomAsset, scene, tex, place, showRug]);
 
   useEffect(() => {
     const c = canvasRef.current?.getContext("2d");

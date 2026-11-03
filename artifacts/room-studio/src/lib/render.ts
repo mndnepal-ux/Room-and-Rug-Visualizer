@@ -157,15 +157,24 @@ function lightMap(scene: Scene, img: HTMLImageElement) {
 let layer: HTMLCanvasElement | null = null;
 let tmp: HTMLCanvasElement | null = null;
 const floorMaskCache = new Map<string, HTMLCanvasElement>();
+const floorMaskSources = new Map<string, { image: HTMLImageElement; pixels: ImageData }>();
 
 export function registerPhotoFloorMask(sceneId: string, image: HTMLImageElement) {
+  const existing = floorMaskSources.get(sceneId);
+  if (existing?.image === image && floorMaskCache.has(sceneId)) {
+    registerFloorPixels(sceneId, existing.pixels);
+    return;
+  }
   if (image.naturalWidth !== CANVAS_W || image.naturalHeight !== CANVAS_H)
     throw new Error("The room mask does not match the photograph dimensions.");
   const mask = mk(CANVAS_W, CANVAS_H);
   const context = mask.getContext("2d")!;
   context.drawImage(image, 0, 0);
-  registerFloorPixels(sceneId, context.getImageData(0, 0, CANVAS_W, CANVAS_H));
+  const pixels = context.getImageData(0, 0, CANVAS_W, CANVAS_H);
+  registerFloorPixels(sceneId, pixels);
   floorMaskCache.set(sceneId, mask);
+  floorMaskSources.set(sceneId, { image, pixels });
+  lightCache.delete(sceneId);
 }
 
 function floorMask(scene: Scene) {

@@ -1,1 +1,2 @@
 - [Photo mask validation](photo-mask-validation.md) — review the entire floor, not only the default rug; thin legs and floor shadows need separate treatment.
+- [Preview mask lifecycle](preview-mask-lifecycle.md) — live updates can replace renderer caches while React retains photos; fresh screenshots alone miss this failure.
