@@ -78,14 +78,28 @@ def correct_openings(room, alpha, image):
         poly([(68,482),(166,482),(192,457),(195,460),(174,487),
               (66,490)], 255)
     result = cv2.resize(mask, (1024, 683), interpolation=cv2.INTER_AREA)
+    if room == "lobby":
+        # Brown legs / blue upholstery have much higher chroma than the pale
+        # floor, including its neutral cast shadows. Resolve their real edges
+        # inside this inspected underside band instead of retaining the beige
+        # fringe from approximate leg polygons.
+        saturation = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)[:, :, 1].astype(np.float32)
+        chair_alpha = np.clip((75 - saturation) / 20, 0, 1) * 255
+        # Dark neutral stitching / underside pixels are still furniture,
+        # even where their blue chroma drops at the upholstery edge.
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
+        chair_alpha = np.minimum(chair_alpha, np.clip((gray - 100) / 35, 0, 1) * 255)
+        result[515:591, 65:280] = chair_alpha[515:591, 65:280].astype(np.uint8)
     if room == "loft":
         # Actual black metal has a clear luminance boundary here. Work only
         # inside these inspected openings: broad GrabCut furniture regions
         # and approximate stroked spokes both produce floor-colored halos.
         region = np.zeros_like(alpha)
         cv2.fillPoly(region, [np.array([
-            [190,446],[228,441],[282,441],[293,445],[378,445],
-            [404,441],[449,441],[474,437],[505,437],[505,501],[190,501],
+            [193,444],[205,432],[218,437],[240,443],[255,445],
+            [281,442],[298,432],[309,424],[320,412],[345,411],
+            [354,420],[368,429],[378,439],[402,445],[425,443],
+            [449,437],[474,437],[505,437],[505,501],[193,501],
         ], np.int32)], 255)
         cv2.fillPoly(region, [np.array([
             [304,424],[320,412],[338,411],[345,411],[352,417],
