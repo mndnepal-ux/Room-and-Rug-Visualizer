@@ -11,6 +11,30 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /catalog/mnd/{filename}:
+    get:
+      operationId: getMndDesignImage
+      tags: [catalog]
+      summary: Serve an imported Modern Nature Design Nepal rug image
+      parameters:
+        - in: path
+          name: filename
+          required: true
+          schema:
+            type: string
+            pattern: '^mnd-rug-[0-9]{3}(-thumb)?\.webp$'
+      responses:
+        "200":
+          description: Optimized rug image or thumbnail
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Design image not found
+        "503":
+          description: Image temporarily unavailable
   /healthz:
     get:
       operationId: healthCheck

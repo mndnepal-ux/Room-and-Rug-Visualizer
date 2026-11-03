@@ -18,7 +18,7 @@ type Tab = "rugs" | "rooms" | "saved";
 
 const ACCEPT = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 8 * 1024 * 1024;
-const FILTERS: ("All" | Category)[] = ["All", "Flatweave", "Persian-inspired", "Berber", "Modern", "Solid", "Uploads"];
+const FILTERS: ("All" | Category)[] = ["MND Nepal", "All", "Uploads", "Flatweave", "Persian-inspired", "Berber", "Modern", "Solid"];
 const FAMILIES: { id: ColorFamily; label: string; sw: string }[] = [
   { id: "warm", label: "Warm", sw: "#b23a2b" },
   { id: "cool", label: "Cool", sw: "#2f4058" },
@@ -78,8 +78,12 @@ export default function Studio() {
   const [lockAspect, setLockAspect] = useState(true);
   const [tab, setTab] = useState<Tab>("rugs");
   const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<(typeof FILTERS)[number]>("All");
+  const [cat, setCat] = useState<(typeof FILTERS)[number]>("MND Nepal");
+  const [catalogPage, setCatalogPage] = useState(1);
   const [fam, setFam] = useState<ColorFamily | null>(null);
+  const [catalogImages, setCatalogImages] = useState<Record<string, HTMLImageElement>>({});
+  const [catalogError, setCatalogError] = useState<{ id: string; message: string } | null>(null);
+  const [catalogRetry, setCatalogRetry] = useState(0);
   const [roomImgs, setRoomImgs] = useState<Record<string, HTMLImageElement>>({});
   const [roomErr, setRoomErr] = useState<string | null>(null);
   const [designs, setDesigns] = useState<SavedDesign[]>(() => loadDesigns());
@@ -92,6 +96,7 @@ export default function Studio() {
   const [saveName, setSaveName] = useState("");
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const libraryScrollRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const texCache = useRef(new Map<string, HTMLCanvasElement>());
@@ -105,6 +110,20 @@ export default function Studio() {
       .catch(() => setRoomErr("The room photographs could not be loaded."));
   }, []);
   useEffect(loadRooms, [loadRooms]);
+
+  // Load only the selected full-size catalogue texture. Thumbnails use separate
+  // small images, and same-origin storage serving keeps PNG export untainted.
+  useEffect(() => {
+    if (!rug.imageSrc || catalogImages[rug.id]) return;
+    let active = true;
+    setCatalogError(null);
+    loadImage(rug.imageSrc).then((img) => {
+      if (active) setCatalogImages((current) => ({ ...current, [rug.id]: img }));
+    }).catch(() => {
+      if (active) setCatalogError({ id: rug.id, message: `${rug.name} could not be loaded. Please try again.` });
+    });
+    return () => { active = false; };
+  }, [rug.id, rug.imageSrc, catalogImages, catalogRetry]);
 
   // Load uploads from IndexedDB
   useEffect(() => {
@@ -134,6 +153,7 @@ export default function Studio() {
   const tex: TexSource | null = useMemo(() => {
     const u = uploads.find((x) => x.id === rug.id);
     if (u) return u.img;
+    if (rug.imageSrc) return catalogImages[rug.id] ?? null;
     const w = Math.round(place.wCm / 10) * 10, h = Math.round(place.hCm / 10) * 10;
     const k = `${rug.id}:${w}x${h}`;
     let t = texCache.current.get(k);
@@ -143,7 +163,10 @@ export default function Studio() {
       texCache.current.set(k, t);
     }
     return t;
-  }, [rug, uploads, place.wCm, place.hCm]);
+  }, [rug, uploads, catalogImages, place.wCm, place.hCm]);
+
+  const rugLoading = !!rug.imageSrc && !catalogImages[rug.id];
+  const activeCatalogError = catalogError?.id === rug.id ? catalogError.message : null;
 
   const roomImg = roomImgs[scene.id];
 
@@ -313,6 +336,10 @@ export default function Studio() {
 
   const download = () => {
     if (!roomImg) return;
+    if (showRug && !tex) {
+      toast({ title: "Design is not ready", description: "Wait for the rug image to load before exporting.", variant: "destructive" });
+      return;
+    }
     try {
       const c = renderToCanvas(view);
       c.toBlob((b) => {
@@ -357,6 +384,10 @@ export default function Studio() {
 
   const save = async () => {
     if (!roomImg) return;
+    if (!tex) {
+      toast({ title: "Design is not ready", description: "Wait for the rug image to load before saving.", variant: "destructive" });
+      return;
+    }
     const d: SavedDesign = {
       id: `d-${Date.now().toString(36)}`,
       name: saveName.trim() || `${rug.name}, ${scene.name}`,
@@ -403,7 +434,13 @@ export default function Studio() {
     (!query || `${r.name} ${r.maker} ${r.category}`.toLowerCase().includes(query.toLowerCase())),
   );
 
-  const thumbFor = (r: Rug) => (r.upload ? (r as UploadRug).thumb : rugThumb(r));
+  useEffect(() => { setCatalogPage(1); }, [cat, fam, query]);
+  useEffect(() => { libraryScrollRef.current?.scrollTo({ top: 0 }); }, [catalogPage, cat, fam, query]);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / 20));
+  const currentPage = Math.min(catalogPage, pageCount);
+  const pageRugs = filtered.slice((currentPage - 1) * 20, currentPage * 20);
+
+  const thumbFor = (r: Rug) => r.thumbnailSrc ?? (r.upload ? (r as UploadRug).thumb : rugThumb(r));
   const pct = (v: number, a: number, b: number) => ({ ["--pct" as string]: `${((v - a) / (b - a)) * 100}%` }) as React.CSSProperties;
 
   /* ---------- UI ---------- */
@@ -421,6 +458,11 @@ export default function Studio() {
       {tab === "rugs" && (
         <div className="flex flex-col min-h-0 flex-1">
           <div className="px-4 pt-4 space-y-3">
+            <div className="rounded-lg bg-card border px-3 py-2">
+              <p className="text-xs font-medium">Modern Nature Design Nepal</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">81 designs from collection pages 1–5</p>
+              <a href="https://modernnaturedesignnepal.com/collections" target="_blank" rel="noreferrer" className="text-[11px] text-primary underline underline-offset-2">View original collection</a>
+            </div>
             <label className="relative block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input data-testid="input-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search rugs or makers"
@@ -443,7 +485,7 @@ export default function Studio() {
               ))}
             </div>
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto scroll-thin px-4 py-4">
+          <div ref={libraryScrollRef} className="flex-1 min-h-0 overflow-y-auto scroll-thin px-4 py-4">
             <button data-testid="button-upload" onClick={() => fileRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); setDropHover(true); }} onDragLeave={() => setDropHover(false)}
               onDrop={(e) => { e.preventDefault(); setDropHover(false); handleFile(e.dataTransfer.files[0]); }}
@@ -465,16 +507,16 @@ export default function Studio() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {filtered.map((r, i) => (
+                {pageRugs.map((r, i) => (
                   <div key={r.id} className="relative group rise" style={{ animationDelay: `${i * 25}ms` }}>
                     <button data-testid={`card-rug-${r.id}`} onClick={() => chooseRug(r)}
                       className={`w-full text-left rounded-xl p-2 transition-all ${rugId === r.id ? "bg-card ring-2 ring-primary shadow-md" : "hover:bg-card hover:shadow-sm"}`}>
                       <div className="aspect-[4/3] rounded-lg bg-muted grid place-items-center overflow-hidden">
-                        <img src={thumbFor(r)} alt={r.name} className="max-h-[86%] max-w-[86%] object-contain drop-shadow-[0_3px_4px_rgba(30,18,8,0.25)] transition-transform duration-300 group-hover:scale-[1.05] group-hover:-rotate-1" />
+                         <img src={thumbFor(r)} alt={r.name} loading="lazy" decoding="async" className="max-h-[86%] max-w-[86%] object-contain drop-shadow-[0_3px_4px_rgba(30,18,8,0.25)] transition-transform duration-300 group-hover:scale-[1.05] group-hover:-rotate-1" />
                       </div>
                       <p className="mt-2 text-[13px] font-medium leading-tight truncate">{r.name}</p>
                       <p className="text-[11px] text-muted-foreground truncate">{r.maker}</p>
-                      <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{r.wCm} x {r.hCm} cm</p>
+                      <p className="font-mono text-[10px] text-muted-foreground mt-0.5">{r.sourcePage ? `Collection page ${r.sourcePage}` : `${r.wCm} x ${r.hCm} cm`}</p>
                     </button>
                     {r.upload && (
                       confirmDel === r.id ? (
@@ -491,6 +533,22 @@ export default function Studio() {
               </div>
             )}
           </div>
+          {filtered.length > 0 && (
+            <nav aria-label="Rug collection pages" className="shrink-0 border-t px-4 py-3 bg-background">
+              <p className="text-[11px] text-muted-foreground mb-2" role="status">
+                {(currentPage - 1) * 20 + 1}–{Math.min(currentPage * 20, filtered.length)} of {filtered.length} designs
+              </p>
+              <div className="flex items-center justify-between gap-1">
+                <button aria-label="Previous collection page" disabled={currentPage === 1} onClick={() => setCatalogPage(currentPage - 1)} className="text-xs py-1.5 px-1 disabled:opacity-30">Prev</button>
+                {Array.from({ length: pageCount }, (_, i) => i + 1).map((page) => (
+                  <button key={page} data-testid={`catalog-page-${page}`} aria-label={`Collection page ${page}`} aria-current={currentPage === page ? "page" : undefined}
+                    onClick={() => setCatalogPage(page)}
+                    className={`size-7 rounded-md text-xs transition ${currentPage === page ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"}`}>{page}</button>
+                ))}
+                <button aria-label="Next collection page" disabled={currentPage === pageCount} onClick={() => setCatalogPage(currentPage + 1)} className="text-xs py-1.5 px-1 disabled:opacity-30">Next</button>
+              </div>
+            </nav>
+          )}
         </div>
       )}
 
@@ -561,6 +619,7 @@ export default function Studio() {
         <span className="eyebrow">Now styling</span>
         <h2 className="font-display text-2xl leading-tight mt-1" data-testid="text-rug-name">{rug.name}</h2>
         <p className="text-xs text-muted-foreground">{rug.maker} / {rug.category}</p>
+        {rug.sourcePage && <p className="text-[11px] text-muted-foreground mt-1">Original design · collection page {rug.sourcePage}. Sizes below are adjustable preview sizes.</p>}
       </div>
 
       <div className="space-y-4">
@@ -608,7 +667,7 @@ export default function Studio() {
         <span className="eyebrow">Keep this room</span>
         <input data-testid="input-design-name" value={saveName} onChange={(e) => setSaveName(e.target.value)} placeholder={`${rug.name}, ${scene.name}`} maxLength={60}
           className="w-full h-9 px-3 rounded-lg bg-card border border-input text-sm outline-none focus:ring-2 focus:ring-ring/30" />
-        <button data-testid="button-save" onClick={save} disabled={!roomImg} className="w-full h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:brightness-110 active:scale-[.99] transition disabled:opacity-50">
+        <button data-testid="button-save" onClick={save} disabled={!roomImg || !tex} className="w-full h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center justify-center gap-2 hover:brightness-110 active:scale-[.99] transition disabled:opacity-50">
           <Bookmark className="size-4" />Save design locally
         </button>
         <p className="text-[11px] text-muted-foreground flex gap-1.5"><HardDrive className="size-3.5 shrink-0 mt-px" />Saved to this browser only. Uploads stay on your device.</p>
@@ -635,10 +694,10 @@ export default function Studio() {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="hidden md:flex items-center gap-1.5 text-[11px] text-muted-foreground mr-2 px-2 h-7 rounded-full bg-muted"><HardDrive className="size-3.5" />Local only, nothing leaves this browser</span>
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] text-muted-foreground mr-2 px-2 h-7 rounded-full bg-muted"><HardDrive className="size-3.5" />Local saves · uploads stay on your device</span>
           <button data-testid="button-upload-header" onClick={() => fileRef.current?.click()} className="hidden sm:flex h-9 px-3 rounded-lg border text-sm items-center gap-2 hover:bg-muted transition"><Upload className="size-4" />Upload rug</button>
           <button data-testid="button-share" onClick={share} className="h-9 px-3 rounded-lg border text-sm flex items-center gap-2 hover:bg-muted transition"><Share2 className="size-4" /><span className="hidden sm:inline">Share</span></button>
-          <button data-testid="button-download" onClick={download} disabled={!roomImg} className="h-9 px-3 rounded-lg bg-secondary text-secondary-foreground text-sm flex items-center gap-2 hover:brightness-125 transition disabled:opacity-50"><Download className="size-4" /><span className="hidden sm:inline">PNG</span></button>
+          <button data-testid="button-download" onClick={download} disabled={!roomImg || (showRug && !tex)} className="h-9 px-3 rounded-lg bg-secondary text-secondary-foreground text-sm flex items-center gap-2 hover:brightness-125 transition disabled:opacity-50"><Download className="size-4" /><span className="hidden sm:inline">PNG</span></button>
         </div>
       </header>
 
@@ -668,6 +727,13 @@ export default function Studio() {
                 onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
                 className={`w-full h-full rounded-xl shadow-[0_24px_60px_-28px_rgba(31,42,68,0.55)] touch-none select-none ${view === "room" && showRug ? (dragging ? "cursor-grabbing" : "cursor-grab") : ""}`} />
               {!roomImg && !roomErr && <div className="absolute inset-0 rounded-xl skel" data-testid="status-loading" />}
+              {roomImg && showRug && rugLoading && (
+                <div role="status" className="absolute top-3 left-3 right-3 rounded-lg bg-card/95 border px-3 py-2 text-xs shadow-sm">
+                  {activeCatalogError ? (
+                    <><p className="text-destructive">{activeCatalogError}</p><button className="mt-1 text-primary underline" onClick={() => setCatalogRetry((v) => v + 1)}>Retry design image</button></>
+                  ) : <p>Loading {rug.name}…</p>}
+                </div>
+              )}
               {roomErr && (
                 <div className="absolute inset-0 rounded-xl bg-muted grid place-items-center text-center p-6" data-testid="status-error">
                   <div><p className="font-display text-xl">The room did not load</p><p className="text-sm text-muted-foreground mt-1">{roomErr}</p>

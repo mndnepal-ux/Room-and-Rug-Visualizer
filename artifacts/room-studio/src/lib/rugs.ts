@@ -1,5 +1,7 @@
+import mndDesigns from "./mnd-catalog.json";
+
 export type Pattern = "kilim" | "medallion" | "berber" | "stripe" | "check" | "abrash" | "arcs" | "terrazzo";
-export type Category = "Flatweave" | "Persian-inspired" | "Berber" | "Modern" | "Solid" | "Uploads";
+export type Category = "MND Nepal" | "Flatweave" | "Persian-inspired" | "Berber" | "Modern" | "Solid" | "Uploads";
 export type ColorFamily = "warm" | "cool" | "neutral" | "bold";
 
 export interface Rug {
@@ -15,9 +17,13 @@ export interface Rug {
   fringe?: boolean;
   seed?: number;
   upload?: boolean;
+  imageSrc?: string;
+  thumbnailSrc?: string;
+  sourcePage?: number;
+  sourceUrl?: string;
 }
 
-export const CATALOG: Rug[] = [
+const SAMPLE_CATALOG: Rug[] = [
   { id: "ember-kilim", name: "Ember Kilim", maker: "Atelier Sivas", category: "Flatweave", family: "warm", pattern: "kilim", palette: ["#b23a2b", "#1f2a44", "#e9d9b8", "#d99a2b", "#5c1f1a"], wCm: 240, hCm: 170, fringe: true, seed: 11 },
   { id: "tabriz-night", name: "Tabriz Night", maker: "House of Varzaneh", category: "Persian-inspired", family: "cool", pattern: "medallion", palette: ["#1f2a44", "#8e2b24", "#e7d6b0", "#c48a3a", "#3e5a6b"], wCm: 300, hCm: 200, fringe: true, seed: 4 },
   { id: "atlas-cream", name: "Atlas Cream", maker: "Ourika Loom Co.", category: "Berber", family: "neutral", pattern: "berber", palette: ["#efe6d4", "#2b2620", "#d9ccb3"], wCm: 280, hCm: 190, fringe: true, seed: 7 },
@@ -32,6 +38,27 @@ export const CATALOG: Rug[] = [
   { id: "oat-solid", name: "Oat Boucle", maker: "Kerman & Daughter", category: "Solid", family: "neutral", pattern: "abrash", palette: ["#d8c9ad", "#cbb995", "#8a7656"], wCm: 250, hCm: 170, seed: 8 },
   { id: "garnet-stripe", name: "Garnet Ticking", maker: "Atelier Sivas", category: "Flatweave", family: "bold", pattern: "stripe", palette: ["#7d2230", "#e8dcc2", "#c4602f", "#1f2a44"], wCm: 210, hCm: 150, fringe: true, seed: 41 },
 ];
+
+const assetUrl = (objectPath: string) =>
+  `${import.meta.env.BASE_URL}api/catalog/mnd/${objectPath.split("/").pop()}`;
+
+export const MND_CATALOG: Rug[] = mndDesigns.map((design) => ({
+  id: design.id,
+  name: design.name,
+  maker: design.maker,
+  category: "MND Nepal",
+  family: design.family as ColorFamily,
+  palette: design.palette,
+  wCm: design.wCm,
+  hCm: design.hCm,
+  imageSrc: assetUrl(design.imagePath),
+  thumbnailSrc: assetUrl(design.thumbnailPath),
+  sourcePage: design.sourcePage,
+  sourceUrl: design.sourceUrl,
+}));
+
+// Keep sample IDs compatible with designs previously saved in this browser.
+export const CATALOG: Rug[] = [...MND_CATALOG, ...SAMPLE_CATALOG];
 
 function rng(seed: number) {
   let a = seed >>> 0;

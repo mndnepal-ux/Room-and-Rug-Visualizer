@@ -6,12 +6,12 @@ A browser-based rug-in-room visualizer inspired by MyRoom Studio, with original 
 
 - Primary managed workflow: `artifacts/room-studio: web`
 - `pnpm --filter @workspace/room-studio run typecheck` — check the visualizer
-- `pnpm --filter @workspace/api-server run dev` — optional shared API server; not needed by the visualizer
+- `artifacts/api-server: API Server` — required for serving the imported MND catalogue images from App Storage
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- No database, secrets, or external rendering service is required by the visualizer.
+- No database or external rendering service is required. App Storage is used for optimized public MND design images; its environment is provisioned by the storage setup.
 
 ## Stack
 
@@ -26,6 +26,7 @@ A browser-based rug-in-room visualizer inspired by MyRoom Studio, with original 
 
 - `artifacts/room-studio/` — visualizer application and original scene assets.
 - `docs/reference-research.md` — reference-site findings, sources, and research limitations.
+- `scripts/src/import-mnd-catalog.ts` — import and optimize the public MND collection into App Storage.
 
 ## Architecture decisions
 
@@ -35,15 +36,17 @@ A browser-based rug-in-room visualizer inspired by MyRoom Studio, with original 
 
 ## Product
 
-Four furnished scenes, an original searchable/filterable rug collection, custom image uploads, size/position/rotation controls, direct dragging, room/close-up/plan views, before/after, fullscreen, local saved designs, shareable catalogue configurations, and PNG downloads.
+Four furnished scenes, all 81 MND Nepal designs from collection pages 1–5, compatible original sample designs, search and pagination, custom image uploads, size/position/rotation controls, direct dragging, room/close-up/plan views, before/after, fullscreen, local saved designs, shareable catalogue configurations, and PNG downloads.
 
 ## User preferences
 
 The user requested deep research of https://myroom.studio/ and a room visualizer based on that workflow.
+The user requested all rug designs from pages 1–5 of https://modernnaturedesignnepal.com/collections, using the actual design images and original names.
 
 ## Gotchas
 
 Uploaded rug images stay in the browser; shared links cannot transfer those images to another device. A photograph does not provide real-world measurement calibration. Replacing a room photograph requires retracing its floor and furniture masks.
+MND catalogue size defaults are adjustable preview dimensions inferred from image proportions, not verified product measurements. Catalogue images are served through the API at the same origin to preserve PNG export without canvas CORS restrictions.
 
 ## Pointers
 
