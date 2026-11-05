@@ -38,3 +38,9 @@ Do not increase brightness thresholds across entire chair-base regions to recove
 **Why:** Gray metal highlights overlap floor-reflection brightness, and the Bedroom stand casts dark, saturated shadows that resemble its wood. Broad color rules reintroduce floor cutouts.
 
 **How to apply:** Protect verified solid supports with tight contours and clear known shadow openings geometrically. Check both the object's continuity and adjacent floor with enlarged, fully opaque overlays.
+
+Every support-preservation correction needs an adjacent-floor check, not just an object check.
+
+**Why:** A rectangular Office support correction kept the metal visible but also retained a small rectangle of bare floor alongside it. Object-only checks passed while the user's reported defect remained.
+
+**How to apply:** Sample the native photograph on both sides of the actual support before defining its boundary, and assert that neighboring floor pixels are fully rug-visible.

@@ -91,6 +91,18 @@ def correct_openings(room, alpha, image):
         poly([(68,482),(166,482),(192,457),(195,460),(174,487),
               (66,490)], 255)
     result = cv2.resize(mask, (1024, 683), interpolation=cv2.INTER_AREA)
+    if room == "bedroom":
+        # De-fringe only the narrow post edges. Never classify the whole
+        # shadow beneath this stand: its brown reflection resembles wood.
+        saturation = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)[:, :, 1].astype(np.float32)
+        # Measured inside these narrow windows: warm reflected floor is
+        # below 125 saturation, while the real post edges exceed 130.
+        post_alpha = np.clip((130 - saturation) / 5, 0, 1) * 255
+        for x0, y0, x1, y1 in [
+            (830,441,837,452), (848,444,857,459),
+            (858,444,864,450), (877,450,885,459),
+        ]:
+            result[y0:y1, x0:x1] = post_alpha[y0:y1, x0:x1].astype(np.uint8)
     if room == "lobby":
         # This entire neutral gray patch is floor under the sofa plinth.
         # Earlier narrow polygons left a conspicuous staircase beside the
@@ -106,12 +118,14 @@ def correct_openings(room, alpha, image):
         # floor, including its neutral cast shadows. Resolve their real edges
         # inside this inspected underside band instead of retaining the beige
         # fringe from approximate leg polygons.
-        saturation = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)[:, :, 1].astype(np.float32)
+        saturation = hsv[:, :, 1].astype(np.float32)
         chair_alpha = np.clip((75 - saturation) / 20, 0, 1) * 255
-        # Dark neutral stitching / underside pixels are still furniture,
-        # even where their blue chroma drops at the upholstery edge.
+        # Hue distinguishes blue cloth from neutral floor shadows. A broad
+        # brightness cutoff used to keep those shadows as bare-floor strips.
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
-        chair_alpha = np.minimum(chair_alpha, np.clip((gray - 100) / 35, 0, 1) * 255)
+        chair_alpha = np.minimum(chair_alpha, np.clip((gray - 65) / 30, 0, 1) * 255)
+        cloth = (hsv[:, :, 0] > 80) & (hsv[:, :, 0] < 135) & (saturation > 15)
+        chair_alpha[cloth] = 0
         result[515:591, 65:280] = chair_alpha[515:591, 65:280].astype(np.uint8)
     if room == "loft":
         # Actual black metal has a clear luminance boundary here. Work only
@@ -137,15 +151,12 @@ def correct_openings(room, alpha, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
         detail_alpha = np.clip((gray - 45) / 30, 0, 1) * 255
         result[region > 0] = detail_alpha[region > 0].astype(np.uint8)
-        # Continuous solid support between the seat and swivel base.
-        # Preserve gray metal structurally; raising the global luminance
-        # threshold also preserves unwanted gray floor reflections.
-        cv2.fillPoly(result, [np.array([
-            [250,443],[260,443],[260,458],[250,458],
-        ], np.int32)], 0)
-        cv2.fillPoly(result, [np.array([
-            [407,442],[415,442],[415,458],[407,458],
-        ], np.int32)], 0)
+        # The columns are narrower than their previous rectangular holdouts.
+        # Use photo pixels only in these small windows: the pale pixels next
+        # to the metal must receive rug, not form a rectangular floor cutout.
+        support_alpha = np.clip((gray - 85) / 20, 0, 1) * 255
+        for x0, y0, x1, y1 in [(248,443,265,455), (402,442,419,455)]:
+            result[y0:y1, x0:x1] = support_alpha[y0:y1, x0:x1].astype(np.uint8)
         cv2.fillPoly(result, [np.array([
             [260,455],[278,456],[281,457],[282,459],
             [282,461],[263,460],
