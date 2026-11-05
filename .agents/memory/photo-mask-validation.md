@@ -32,3 +32,9 @@ Pale regions are not necessarily floor: the Lobby sofa has a tall cream front pa
 **Why:** User close-ups highlighted these ambiguous boundaries. Treating every pale strip as a shadow/floor correction risks painting carpet over upholstery instead.
 
 **How to apply:** Establish the physical object boundary from the original photo before clearing an ambiguous region; separately protect upholstery and fill only the narrow floor gap immediately beneath it.
+
+Do not increase brightness thresholds across entire chair-base regions to recover gray metal, or reuse the Lobby color rule beneath the Bedroom stand.
+
+**Why:** Gray metal highlights overlap floor-reflection brightness, and the Bedroom stand casts dark, saturated shadows that resemble its wood. Broad color rules reintroduce floor cutouts.
+
+**How to apply:** Protect verified solid supports with tight contours and clear known shadow openings geometrically. Check both the object's continuity and adjacent floor with enlarged, fully opaque overlays.

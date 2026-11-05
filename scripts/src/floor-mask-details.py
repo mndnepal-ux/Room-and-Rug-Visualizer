@@ -31,6 +31,17 @@ def correct_openings(room, alpha, image):
         # of the photo. It was absent from the original furniture seeds.
         poly([(878,621),(898,621),(895,638),(891,661),
               (887,683),(874,683),(876,655)], 0)
+    elif room == "bedroom":
+        # Floor beneath the plant stand, not its cast shadow or reflections.
+        # Leave the diagonal wall skirting behind the stand untouched.
+        poly([(836,440),(848,442),(855,445),(859,443),(864,444),
+              (877,449),(879,450),(879,462),(828,462),(828,450),
+              (832,450),(832,441)], 255)
+        # Real stand posts (the rear post is visible between the front ones).
+        poly([(831.8,430),(835.8,431),(835.8,449),(832,450)], 0)
+        poly([(850,437),(854.8,437),(854.8,457),(850.2,457)], 0)
+        poly([(859,440),(862.3,440),(862.3,448),(859,448)], 0)
+        poly([(878.5,431),(883,431),(883,457),(878.5,457)], 0)
     elif room == "lobby":
         # The pale vertical area behind the blue chair is the left sofa's
         # front panel, down to its plinth at y=498. It is not exposed floor.
@@ -39,6 +50,8 @@ def correct_openings(room, alpha, image):
         # Immediately below that plinth is floor, including the narrow shadow
         # between the plant stand and the curved side of the blue chair.
         poly([(46,499),(57,499),(60,509),(62,516),(46,516)], 255)
+        # The dark sofa plinth ends at y=500, above the floor opening.
+        poly([(38,495),(70,495),(71,500),(38,500)], 0)
         # Rebuild the complete open table frame, rather than patching isolated
         # beige holes. The lower ring is a tube, never a solid ellipse/disk.
         poly([(283,425),(455,425),(455,485),(283,485)], 255)
@@ -79,6 +92,16 @@ def correct_openings(room, alpha, image):
               (66,490)], 255)
     result = cv2.resize(mask, (1024, 683), interpolation=cv2.INTER_AREA)
     if room == "lobby":
+        # This entire neutral gray patch is floor under the sofa plinth.
+        # Earlier narrow polygons left a conspicuous staircase beside the
+        # blue chair. Use the photo's blue edge inside one continuous opening.
+        opening = np.zeros_like(alpha)
+        cv2.fillPoly(opening, [np.array([
+            [40,501],[73,501],[74,511],[78,521],[82,527],[40,527],
+        ], np.int32)], 255)
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        blue = (hsv[:, :, 0] > 80) & (hsv[:, :, 0] < 135) & (hsv[:, :, 1] > 35)
+        result[opening > 0] = np.where(blue[opening > 0], 0, 255)
         # Brown legs / blue upholstery have much higher chroma than the pale
         # floor, including its neutral cast shadows. Resolve their real edges
         # inside this inspected underside band instead of retaining the beige
@@ -114,6 +137,19 @@ def correct_openings(room, alpha, image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY).astype(np.float32)
         detail_alpha = np.clip((gray - 45) / 30, 0, 1) * 255
         result[region > 0] = detail_alpha[region > 0].astype(np.uint8)
+        # Continuous solid support between the seat and swivel base.
+        # Preserve gray metal structurally; raising the global luminance
+        # threshold also preserves unwanted gray floor reflections.
+        cv2.fillPoly(result, [np.array([
+            [250,443],[260,443],[260,458],[250,458],
+        ], np.int32)], 0)
+        cv2.fillPoly(result, [np.array([
+            [407,442],[415,442],[415,458],[407,458],
+        ], np.int32)], 0)
+        cv2.fillPoly(result, [np.array([
+            [260,455],[278,456],[281,457],[282,459],
+            [282,461],[263,460],
+        ], np.int32)], 0)
         # Preserve the two cream seat cushions visible beside the opening.
         # Their edges must not be mistaken for the similarly colored floor.
         cv2.fillPoly(result, [np.array([
