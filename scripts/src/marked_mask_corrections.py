@@ -114,6 +114,10 @@ def correct_marked_regions(room, alpha, image):
         tubes = cv2.resize(result, None, fx=scale, fy=scale,
                            interpolation=cv2.INTER_NEAREST)
         for points in [
+            # The cream seat tip follows a rounded contour, not the old
+            # diagonal floor opening beneath the desk.
+            [(297,405),(308,405),(312,407),(315,410),(315,413),
+             (312,417),(307,420),(299,424),(296,425)],
             # Actual desk support, interrupted by an earlier floor opening.
             [(445,430),(450,428),(455,430),(455,444),(445,444)],
             # Cabinet side above its sloping plinth is solid, not dark floor.
@@ -126,5 +130,15 @@ def correct_marked_regions(room, alpha, image):
         ]:
             cv2.fillPoly(tubes, [np.round(np.array(points) * scale).astype(np.int32)], 0)
         result = cv2.resize(tubes, (1024, 683), interpolation=cv2.INTER_AREA)
+        # Clear the tiny triangular view of floor between the curved pot
+        # bottom and the right wooden post; the post begins at x=35.
+        opening([(30,497),(34,493),(34,498),(30,498)],
+                np.full_like(gray, 255))
+        # The cabinet's left edge is x=68, not the earlier x=66 seed.
+        opening([(65,440),(67,439),(67,473),(65,473)],
+                np.full_like(gray, 255))
+        # Small floor fringe below the left side of the curved seat frame.
+        opening([(214,431),(220,433),(230,437),(239,440),
+                 (239,442),(214,437)], np.full_like(gray, 255))
 
     return result
