@@ -22,6 +22,16 @@ def correct_marked_regions(room, alpha, image):
         polygon([(44,491),(238,390),(238,398),(231,402),
                  (231,414),(46,523),(44,523)], 0)
         polygon([(0,493),(46,493),(46,523),(0,523)], 0)
+        # Thin supports below the old floor horizon must remain foreground.
+        for points in [
+            [(254,383),(259,383),(259,405),(254,405)],
+            [(286,383),(292,383),(292,405),(287,405)],
+            [(266,387),(269,387),(269,398),(266,398)],
+            [(640,418),(674,418),(674,423),(640,423)],
+            [(660,422),(669,422),(670,439),(665,440),(662,436)],
+            [(681,428),(686,432),(685,442),(680,442)],
+        ]:
+            polygon(points, 0)
     elif room == "lobby":
         # Counter front, including its real continuous gold plinth. The seed
         # floor boundary cut diagonally through the vertical wood slats.
