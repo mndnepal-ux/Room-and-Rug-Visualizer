@@ -119,6 +119,24 @@ for room, filename in files.items():
         "loft": {"floor": [(224,477),(277,477),(320,433),(345,434),(430,485),(329,414),(217,441),(231,445),(251,445),(252,448)],
                  "object": [(256,485),(306,428),(480,446),(517,453),(120,479),(308,412),(375,414),(230,433),(256,447),(411,448)]},
     }
+    # Red-marked screenshot regressions: every reported region gets both
+    # an exposed-floor probe and a nearby solid-object probe.
+    marked_probes = {
+        "lobby": {
+            "floor": [(258,428),(263,426),(985,470),(670,382),(653,377),(812,385)],
+            "object": [(267,425),(653,360),(660,373),(809,370),(990,470)],
+        },
+        "dining": {
+            "floor": [(32,612)],
+            "object": [(26,612),(21,599)],
+        },
+        "loft": {
+            "floor": [(682,475),(721,500),(740,523),(470,463),(48,460)],
+            "object": [(674,480),(688,490),(470,459),(34,499),(250,440)],
+        },
+    }
+    for kind, points in marked_probes.get(room, {}).items():
+        probes[room][kind].extend(points)
     for kind, points in probes[room].items():
         for x, y in points:
             value = int(alpha[y, x])

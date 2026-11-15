@@ -44,3 +44,9 @@ Every support-preservation correction needs an adjacent-floor check, not just an
 **Why:** A rectangular Office support correction kept the metal visible but also retained a small rectangle of bare floor alongside it. Object-only checks passed while the user's reported defect remained.
 
 **How to apply:** Sample the native photograph on both sides of the actual support before defining its boundary, and assert that neighboring floor pixels are fully rug-visible.
+
+Treat annotated “floor overlap” reports as potentially including both directions of occlusion error, not just uncovered floor beneath legs.
+
+**Why:** Red-marked screenshots exposed rug painted onto the Lobby counter and sofa arm as well as floor islands between Office cantilever frames. Rechecking only the previously discussed chair legs missed these other locations.
+
+**How to apply:** Map every marked region to the original photograph, distinguish solid furniture from true openings, and verify the rug at the user's non-default positions.

@@ -1,6 +1,7 @@
 """Photo-specific occlusion details; shadows are deliberately not objects."""
 import cv2
 import numpy as np
+from marked_mask_corrections import correct_marked_regions
 
 
 def correct_openings(room, alpha, image):
@@ -176,4 +177,4 @@ def correct_openings(room, alpha, image):
             [456,410],[524,410],[524,460],[512,460],[511,456],
             [454,456],[451,453],[451,433],
         ], np.int32)], 0)
-    return result
+    return correct_marked_regions(room, result, image)
