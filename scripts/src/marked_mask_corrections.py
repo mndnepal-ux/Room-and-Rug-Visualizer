@@ -15,7 +15,14 @@ def correct_marked_regions(room, alpha, image):
     def polygon(points, value):
         cv2.fillPoly(canvas, [np.round(np.array(points) * scale).astype(np.int32)], value)
 
-    if room == "lobby":
+    if room == "living":
+        # The TV cabinet's brown diagonal plinth is vertical furniture,
+        # not wood flooring. The floor seed followed the white doors and
+        # allowed a moved rug to cover the entire lower wooden face.
+        polygon([(44,491),(238,390),(238,398),(231,402),
+                 (231,414),(46,523),(44,523)], 0)
+        polygon([(0,493),(46,493),(46,523),(0,523)], 0)
+    elif room == "lobby":
         # Counter front, including its real continuous gold plinth. The seed
         # floor boundary cut diagonally through the vertical wood slats.
         polygon([(559,285),(665,285),(665,377),(559,377)], 0)

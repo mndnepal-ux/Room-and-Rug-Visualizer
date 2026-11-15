@@ -122,6 +122,10 @@ for room, filename in files.items():
     # Red-marked screenshot regressions: every reported region gets both
     # an exposed-floor probe and a nearby solid-object probe.
     marked_probes = {
+        "living": {
+            "floor": [(100,494),(180,446),(40,527)],
+            "object": [(100,479),(180,432),(40,513)],
+        },
         "lobby": {
             "floor": [(258,428),(263,426),(985,470),(670,382),(653,377),(812,385),(336,355),(984,455)],
             "object": [(267,425),(653,360),(660,373),(809,370),(990,470)],
