@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { createHash } from "node:crypto";
-import { roomPhotoFile } from "../lib/catalog-storage";
+import { loadRoomPhoto } from "../lib/catalog-storage";
 
 const router = Router();
 const names = new Set(["living.webp", "bedroom.webp", "bedroom-2.webp", "lobby.webp", "kitchen.webp", "office.webp"]);
@@ -19,7 +19,7 @@ router.get("/room-photos/:filename", async (req, res) => {
   try {
     let pending = cache.get(filename);
     if (!pending) {
-      pending = roomPhotoFile(filename).download().then(([bytes]) => {
+      pending = loadRoomPhoto(filename).then((bytes) => {
         if (immutableMask &&
             createHash("sha256").update(bytes).digest("hex").slice(0, 12) !== immutableMask[2])
           throw new Error("Room mask content does not match its immutable address.");

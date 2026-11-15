@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { catalogFile } from "../lib/catalog-storage";
+import { loadCatalogAsset } from "../lib/catalog-storage";
 
 const router = Router();
 // Fixed allowlist below bounds this to 162 small optimized assets (~28 MB).
@@ -10,7 +10,7 @@ const imageCache = new Map<string, Promise<Buffer>>();
 function loadImage(filename: string) {
   let pending = imageCache.get(filename);
   if (!pending) {
-    pending = catalogFile(filename).download().then(([bytes]) => bytes);
+    pending = loadCatalogAsset(filename);
     imageCache.set(filename, pending);
     pending.catch(() => imageCache.delete(filename));
   }
