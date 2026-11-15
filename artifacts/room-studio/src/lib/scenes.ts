@@ -1,3 +1,5 @@
+import maskAssets from "./room-mask-assets.json";
+
 export type Pt = [number, number];
 
 export interface Scene {
@@ -17,9 +19,8 @@ export interface Scene {
 
 const base = import.meta.env.BASE_URL;
 const photo = (id: string) => `${base}api/room-photos/${id}.webp`;
-// Change the version whenever stored masks change, and restart the API to
-// clear its memory cache, so corrected bytes replace browser-cached masks.
-const mask = (id: string) => `${base}api/room-photos/${id}-mask.png?v=20261115a`;
+// Generated after upload: each address identifies exactly one set of bytes.
+const mask = (id: keyof typeof maskAssets) => `${base}api/room-photos/${maskAssets[id]}`;
 
 export const SCENES: Scene[] = [
   {

@@ -94,6 +94,12 @@ def correct_marked_regions(room, alpha, image):
         opening([(646,426),(655,435),(666,441),(681,446),(685,451),
                  (688,460),(694,468),(704,476),(717,481),(731,484),
                  (783,484),(783,574),(638,574)], tube_matte)
+        # Far-right chair: the old floor seed cut the descending tube and
+        # bottom return halfway through. This small opening excludes the
+        # table pedestal and the foreground chair's separate outer frame.
+        right_frame_matte = np.clip((gray - 90) / 30, 0, 1) * 255
+        opening([(916,486),(932,486),(948,515),(953,525),
+                 (950,534),(916,534)], right_frame_matte)
 
         # Reflective gray tubes cannot be distinguished from gray floor by
         # brightness alone. Preserve only their measured thin silhouettes.

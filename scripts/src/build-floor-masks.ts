@@ -2,6 +2,7 @@ import { Storage } from "@google-cloud/storage";
 import { writeFile, readFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 
 const workspace = path.resolve(import.meta.dirname, "../..");
 const modulePath = path.join(workspace, "artifacts/room-studio/src/lib/floor-masks.ts");
@@ -34,12 +35,23 @@ if (!process.argv.includes("--upload")) {
     },
     projectId: "",
   });
+  const manifest: Record<string, string> = {};
   for (const id of ["living", "bedroom", "lobby", "dining", "loft"]) {
     const bytes = await readFile(`${output}/${id}-mask.png`);
-    await client.bucket(bucket).file(`${parts.join("/")}/rooms/user-rooms/${id}-mask.png`).save(bytes, {
+    const digest = createHash("sha256").update(bytes).digest("hex").slice(0, 12);
+    const filename = `${id}-mask-${digest}.png`;
+    await client.bucket(bucket).file(`${parts.join("/")}/rooms/user-rooms/${filename}`).save(bytes, {
       resumable: false,
-      metadata: { contentType: "image/png", cacheControl: "public, max-age=3600" },
+      metadata: { contentType: "image/png", cacheControl: "public, max-age=31536000, immutable" },
     });
+    manifest[id] = filename;
     console.log(`Stored refined mask: ${id} (${bytes.length} bytes)`);
   }
+  // Publish references only AFTER every immutable object exists. Previously
+  // changing a query version before upload cached the old bytes under the new
+  // URL in already-open browsers, while fresh screenshots saw different masks.
+  await writeFile(
+    path.join(workspace, "artifacts/room-studio/src/lib/room-mask-assets.json"),
+    JSON.stringify(manifest, null, 2) + "\n",
+  );
 }
