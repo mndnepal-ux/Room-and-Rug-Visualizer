@@ -58,6 +58,14 @@ def correct_marked_regions(room, alpha, image):
         # posts remain opaque, while the neutral floor between them is open.
         gold_matte = np.clip((120 - hsv[:, :, 1].astype(np.float32)) / 30, 0, 1) * 255
         opening([(976,456),(999,456),(999,482),(976,482)], gold_matte)
+        # Floor to the left of the coffee-table foliage was retained as a
+        # rectangular plant silhouette. Keep green leaves, not their bounds.
+        foliage_matte = np.clip((hsv[:, :, 1].astype(np.float32) - 45) / 30, 0, 1)
+        foliage_matte[hsv[:, :, 0] < 23] = 0
+        opening([(329,351),(344,351),(344,376),(329,376)],
+                (1 - foliage_matte) * 255)
+        # Floor inside the stand starts above the old rectangular correction.
+        opening([(983,451),(987,451),(987,460),(983,460)], gold_matte)
     elif room == "dining":
         # Kitchen stand: the old thin-part region retained floor alongside
         # the long gold post, and removed some of the post above it.
@@ -98,7 +106,7 @@ def correct_marked_regions(room, alpha, image):
         # bottom return halfway through. This small opening excludes the
         # table pedestal and the foreground chair's separate outer frame.
         right_frame_matte = np.clip((gray - 90) / 30, 0, 1) * 255
-        opening([(916,486),(932,486),(948,515),(953,525),
+        opening([(916,486),(943,486),(950,515),(953,525),
                  (950,534),(916,534)], right_frame_matte)
 
         # Reflective gray tubes cannot be distinguished from gray floor by
@@ -106,9 +114,15 @@ def correct_marked_regions(room, alpha, image):
         tubes = cv2.resize(result, None, fx=scale, fy=scale,
                            interpolation=cv2.INTER_NEAREST)
         for points in [
+            # Actual desk support, interrupted by an earlier floor opening.
+            [(445,430),(450,428),(455,430),(455,444),(445,444)],
+            # Cabinet side above its sloping plinth is solid, not dark floor.
+            [(170,400),(211,400),(211,420),(217,430),
+             (216,434),(170,477)],
             [(692,468),(694,469),(681,526),(680,529),(678,529)],
             [(754,489),(757,489),(756,508),(753,513),
              (749,514),(749,510),(752,507)],
+            [(723,508),(750,508),(750,512),(723,512)],
         ]:
             cv2.fillPoly(tubes, [np.round(np.array(points) * scale).astype(np.int32)], 0)
         result = cv2.resize(tubes, (1024, 683), interpolation=cv2.INTER_AREA)
