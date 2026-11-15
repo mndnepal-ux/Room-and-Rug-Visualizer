@@ -32,6 +32,9 @@ def correct_marked_regions(room, alpha, image):
             [(680,426),(685,430),(685,442),(680,442)],
         ]:
             polygon(points, 0)
+        # This gray wedge is floor in shadow between the tapered sofa
+        # foot and the coffee-table edge, not part of either object.
+        polygon([(373,425),(388,425),(369,450),(368,442)], 255)
     elif room == "lobby":
         # Counter front, including its real continuous gold plinth. The seed
         # floor boundary cut diagonally through the vertical wood slats.
